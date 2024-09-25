@@ -1,0 +1,29 @@
+services:
+  server:
+    build: .
+    container_name: bsky-backend
+    # command: sh dev.sh runserver 0.0.0.0:8000
+    command: tail -f /dev/null
+    ports:
+      - 8002:8000
+    volumes:
+      - .:/app
+      - .vscode-server:/root/.vscode-server
+    env_file:
+      - ./.env
+    healthcheck:
+        test: ['CMD','curl','http://localhost:8001/']
+        interval: 10s
+        timeout: 5s
+        retries: 2
+        start_period: 5s
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 6G
