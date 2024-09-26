@@ -9,6 +9,7 @@ from users.models import User
 
 class Post(CommonModel):
     text = models.TextField(max_length=1024)
+    blocks = models.JSONField(default=[])
 
     favorites: "models.Manager[Favorite]"
     bookmarks: "models.Manager[Bookmark]"
@@ -32,7 +33,9 @@ class Post(CommonModel):
                 models.Prefetch(
                     "mentions",
                     Mention.objects.prefetch_related(
-                        models.Prefetch("user", User.concrete_queryset(user=user))
+                        models.Prefetch(
+                            "mentioned_to", User.concrete_queryset(user=user)
+                        )
                     ).all(),
                 ),
                 cls.get_latest_relevant_repost(user=user),

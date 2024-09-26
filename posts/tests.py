@@ -6,6 +6,7 @@ from base.test import TestCase
 from commons.serializers import inject_context
 from users.models import User
 
+from .text_builder.block_text_builder import BlockTextBuilder
 from .services.post_service import PostService
 from .models import Post, Favorite, Bookmark, Repost
 from .serializers import (
@@ -13,12 +14,35 @@ from .serializers import (
     FavoriteSerializer,
     BookmarkSerializer,
     RepostSerializer,
+    PlainTextSerializer,
 )
 
 
 # 리포스트 된 게시글은 상단으로 올라와야됨 [O]
 class TestPosts(TestCase):
     user: User
+
+    def test_parser(self):
+        builder = BlockTextBuilder()
+        builder.text(value="hello")
+        self.assertEqual(builder.get_json(), [[dict(type="text", value="hello")]])
+        builder.mention(
+            id=self.user.pk, username=self.user.username, value=f"@{self.user.username}"
+        ).new_line().text("hello")
+        ser = PostSerializer(
+            data=dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user.pk)],
+            ),
+            user=self.user,
+        )
+        self.assertEqual(ser.is_valid(raise_exception=True), True)
+        ser.save()
+        self.client.login(self.user)
+        resp = self.client.get("/posts/timeline/")
+        print(resp.json())
+        pass
 
     def test_timeline_resposts_upper(self):
         posts: list[Post] = []

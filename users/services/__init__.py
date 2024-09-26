@@ -24,8 +24,16 @@ class SignupSerializer(SigninSerializer):
     password2 = serializers.CharField()
 
 
+class TokenSerializer(serializers.Serializer):
+    access = serializers.CharField()
+
+
 class RefreshSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+
+class CodeKeySerializer(serializers.Serializer):
+    code_key = serializers.CharField()
 
 
 class AuthService:
@@ -92,16 +100,18 @@ class AuthService:
 
     def send_register_email(self):
         code_key = str(uuid4())
-        code_key = f"register:{code_key}"
-        cache.set(code_key, self.user.pk, 60 * 60)
+        cache_key = f"register:{code_key}"
+        cache.set(cache_key, self.user.pk, 60 * 60)
         send_register_email.delay(user_id=self.user.pk, code_key=code_key)
         return code_key
 
     @classmethod
     def register_user(cls, code_key: str):
-        user_id = cache.get(code_key, None)
+        cache_key = f"register:{code_key}"
+        user_id = cache.get(cache_key, None)
         if not user_id:
             raise exceptions.ValidationError(dict(code_key=["존재하지 않는 키입니다."]))
+        cache.delete(cache_key)
         user = User.objects.filter(pk=user_id).first()
         if not user:
             raise exceptions.ValidationError(
@@ -109,3 +119,7 @@ class AuthService:
             )
         user.is_registered = True
         user.save()
+
+        refresh = TokenS.get_token(user)
+        access = str(refresh.access_token)  # type:ignore
+        return dict(refresh=str(refresh), access=access)

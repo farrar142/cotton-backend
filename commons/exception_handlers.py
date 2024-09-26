@@ -10,7 +10,7 @@ def custom_exception_handler(exc, context):
     # Now add the HTTP status code to the response.
     if response is not None:
         if isinstance(response.data, dict):
-            detail = response.data.pop("detail", None)
-            if detail:
-                response.data = detail
+            detail = response.data.get("detail", None)
+            if not detail:
+                response.data = dict(detail=response.data)
     return response

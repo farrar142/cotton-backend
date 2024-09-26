@@ -50,7 +50,6 @@ class TestUser(TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 200)
-        print(resp.json())
 
 
 # 1. 유저가 생성되면 1시간 뒤에 유저를 삭제하는 셀러리 태스크를 생성

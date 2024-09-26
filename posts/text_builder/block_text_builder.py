@@ -48,12 +48,15 @@ class Hyperlink(PlainText):
 
 @dataclass
 class Mention(PlainText):
+    id: int
+    username: str
     value: str
-    user_id: int
     type: Literal["mention"] = "mention"
 
     def json(self):
-        return dict(value=self.value, type=self.type, user_id=self.user_id)
+        return dict(
+            value=self.value, type=self.type, id=self.id, username=self.username
+        )
 
 
 @dataclass
@@ -62,26 +65,31 @@ class Hidden(PlainText):
     type: Literal["hidden"] = "hidden"
 
 
-class JsonData(TypedDict):
-    builder_type: str
-    value: list[dict]
-
-
 T = TypeVar("T", bound=PlainText)
 P = ParamSpec("P")
 
 
 class BlockTextBuilder:
     builder_type: Literal["block_text"] = "block_text"
-    text_list: list[PlainText]
+    text_list: list[list[PlainText]]
 
     def __init__(self):
         self.text_list = []
 
+    def push(self, block: PlainText):
+        if self.text_list.__len__() == 0:
+            self.text_list.append([])
+        self.text_list[-1].append(block)
+
+    def pop(self, supportIndex=-1):
+        if self.text_list.__len__() == 0:
+            raise
+        return self.text_list.pop(supportIndex)
+
     def text_wrapper(self, kls: Callable[P, T]):
         def decorator(*args: P.args, **kwargs: P.kwargs) -> "BlockTextBuilder":
             text = kls(*args, **kwargs)
-            self.text_list.append(text)
+            self.push(text)
             return self
 
         return decorator
@@ -102,14 +110,28 @@ class BlockTextBuilder:
     def hidden(self):
         return self.text_wrapper(Hidden)
 
+    def new_line(self):
+        self.text_list.append([])
+        return self
+
     def get_plain_text(self):
-        return "".join(list(map(lambda x: x.value, self.text_list)))
+        lines = ""
+        for num, line in enumerate(self.text_list):
+            for block in line:
+                lines += block.value
+            lines += "\n"
+        else:
+            lines = lines.removesuffix("\n")
+        return lines
 
     def get_json(self):
-        return JsonData(
-            value=list(map(lambda text: text.json(), self.text_list)),
-            builder_type="block_text",
-        )
+        lines: list[list[dict]] = []
+        for line in self.text_list:
+            blocks: list[dict] = []
+            for block in line:
+                blocks.append(block.json())
+            lines.append(blocks)
+        return lines
 
     @classmethod
     def _get_matched_type(cls, text_type: str) -> type[Text] | None:
@@ -117,26 +139,26 @@ class BlockTextBuilder:
         return next(filter(lambda x: x.type == text_type, texts), None)
 
     @classmethod
-    def parse_json(cls, data: JsonData):
-        builder = cls()
-        if not data["builder_type"] == cls.builder_type:
-            raise
-        values = data["value"]
-        for value in values:
-            text_type = value.get("type", "")
-            matched = cls._get_matched_type(text_type)
-            if not matched:
-                continue
-            builder.text_list.append(matched.parse(value))
+    def parse_json(cls, lines: list[list[dict]]):
+        for line in lines:
+            for block in line:
+                text_type = block.get("type", "")
+                matched = cls._get_matched_type(text_type)
+                if not matched:
+                    continue
+                builder.push(matched.parse(block))
+            builder.new_line()
+        else:
+            builder.pop(-1)
         return builder
 
 
 if __name__ == "__main__":
     builder = BlockTextBuilder()
-    builder.text(value="hello ").mention(value="sandring ", user_id=2).text(
-        value="this is rich text "
-    ).hyperlink(value="Please visit Our Website ", url="https://google.com")
+    builder.text(value="hello ").mention(
+        value="@sandring ", id=2, username="sandring"
+    ).text(value="this is rich text ").hyperlink(
+        value="Please visit Our Website ", url="https://google.com"
+    )
     json = builder.get_json()
     parsed_builder = BlockTextBuilder.parse_json(json)
-
-    print(parsed_builder.get_json())
