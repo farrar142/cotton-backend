@@ -3,19 +3,30 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 
+from commons import permissions
 from commons.viewsets import BaseViewset, ReadOnlyMixin
 
 from ..models import User
-from ..serializers import UserSerializer
+from ..serializers import UserSerializer, UserUpsertSerializer
 
 
-class UserViewSet(BaseViewset[User, User], ReadOnlyMixin[User]):
+class UserViewSet(BaseViewset[User, User]):
+    permission_classes = [permissions.AuthorizedOrReadOnly]
     queryset = User.concrete_queryset()
 
     read_only_serializer = UserSerializer
-    upsert_serializer = UserSerializer
+    upsert_serializer = UserUpsertSerializer
 
     search_fields = ("username", "id")
+
+    def create(self, *args, **kwargs):
+        raise self.exceptions.PermissionDenied
+
+    def delete(self, *args, **kwargs):
+        raise self.exceptions.PermissionDenied
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:

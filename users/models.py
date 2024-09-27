@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractBaseUser, UserManager, Permission
 from django.db import models
 
 from commons.model_utils import make_property_field
+from images.models import Image
 
 if TYPE_CHECKING:
     from relations.models import Follow
@@ -37,6 +38,9 @@ class UserAbstract(AbstractBaseUser, PermissionsMixin):
 
 class User(UserAbstract):
     is_registered = models.BooleanField(default=False)
+    registered_at = models.DateTimeField(null=True)
+    bio = models.CharField(max_length=511, default="")
+    profile_image = models.ForeignKey(Image, on_delete=models.SET_NULL, null=True)
 
     followings: "models.ManyToManyField[Follow,Self]" = models.ManyToManyField(
         "User",

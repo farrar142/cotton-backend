@@ -21,6 +21,15 @@ class AuthorizedOrReadOnly(BasePermission):
             return False
         return True
 
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        if isinstance(request.user, AnonymousUser):
+            return False
+        if request.user.pk != getattr(obj, "user_id", getattr(obj, "id", None)):
+            return False
+        return True
+
 
 class OwnerOrReadOnly(AuthorizedOrReadOnly):
     def has_object_permission(self, request, view, obj):

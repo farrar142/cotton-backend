@@ -120,7 +120,6 @@ class PostSerializer(BaseModelSerializer[Post]):
             ser.is_valid(raise_exception=True)
             ser.save()
             instance.images.add(*ser.instance)  # type:ignore
-            instance.refresh_from_db()
         return instance
 
 

@@ -1,3 +1,4 @@
+import base64
 from django.template.loader import render_to_string
 from base.test import TestCase
 
@@ -50,6 +51,37 @@ class TestUser(TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class TestUserView(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.client.login(self.user)
+
+    def test_forbidden_create(self):
+        resp = self.client.post("/users/")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_forbidden_other_users_resource(self):
+        resp = self.client.patch(f"/users/{self.user2.pk}/", dict(bio="금지된"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_can_handle_my_resource(self):
+        resp = self.client.patch(f"/users/{self.user.pk}/", dict(bio="금지된"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["bio"], "금지된")
+
+    def test_profile_image(self):
+        with open("./commons/cat.jpg", "rb") as clipped_file:
+            clipped_image = clipped_file.read()
+        b64_str = base64.b64encode(clipped_image)
+        resp = self.client.patch(
+            f"/users/{self.user.pk}/",
+            dict(bio="금지된", profile_image=dict(url=b64_str.decode())),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(bool(resp.json()["profile_image"]), True)
+        self.pprint(resp.json())
 
 
 # 1. 유저가 생성되면 1시간 뒤에 유저를 삭제하는 셀러리 태스크를 생성

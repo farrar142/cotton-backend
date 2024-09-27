@@ -47,7 +47,7 @@ class Client(C):
 
     @header_override()
     def patch(self, *args, **kwargs):
-        return super().patch(*args, **kwargs)
+        return super().patch(content_type="application/json", *args, **kwargs)
 
     @header_override()
     def delete(self, *args, **kwargs):

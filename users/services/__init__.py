@@ -1,5 +1,6 @@
 from uuid import uuid4
 from django.core.cache import cache
+from django.utils.timezone import localtime
 from rest_framework import serializers, exceptions
 
 from commons.requests import Request
@@ -118,6 +119,7 @@ class AuthService:
                 dict(code_key=["존재하지 않는 유저입니다."])
             )
         user.is_registered = True
+        user.registered_at = localtime()
         user.save()
 
         refresh = TokenS.get_token(user)
