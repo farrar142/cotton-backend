@@ -1,7 +1,6 @@
-from typing import Callable
-from rest_framework import exceptions
-from commons import paginations
+from django.apps import apps
 
+from commons import paginations
 from commons import permissions
 from commons.viewsets import BaseViewset
 
@@ -17,20 +16,33 @@ class LatestOrderedCursorPagination(paginations.CursorPagination):
     ordering = ("-latest_date", "-id")
 
 
+class IdOrderedCursorPagination(paginations.CursorPagination):
+    ordering = ("-id",)
+
+
 @create_bool_child_mixin[Post](
+    model_path="posts.Post",
+    url_path="views",
+    override_get_qs=lambda vs, qs: qs.filter(has_view=True),
+    child_str="views",
+)
+@create_bool_child_mixin[Post](
+    model_path="posts.Post",
     url_path="reposts",
     override_get_qs=lambda vs, qs: qs.filter(has_repost=True),
-    get_qs=lambda qs: qs.reposts,
+    child_str="reposts",
 )
 @create_bool_child_mixin[Post](
+    model_path="posts.Post",
     url_path="bookmarks",
     override_get_qs=lambda vs, qs: qs.filter(has_bookmark=True),
-    get_qs=lambda qs: qs.bookmarks,
+    child_str="bookmarks",
 )
 @create_bool_child_mixin[Post](
+    model_path="posts.Post",
     url_path="favorites",
     override_get_qs=lambda vs, qs: qs.filter(has_favorite=True),
-    get_qs=lambda qs: qs.favorites,
+    child_str="favorites",
 )
 class PostViewSet(BaseViewset[Post, User]):
     permission_classes = [permissions.AuthorizedOrReadOnly]
@@ -39,6 +51,7 @@ class PostViewSet(BaseViewset[Post, User]):
     upsert_serializer = PostSerializer
     pagination_class = LatestOrderedCursorPagination
     ordering = ("-latest_date",)
+    ordering_fields = ("-latest_date", "-id")
 
     action = BaseViewset.action
 
@@ -50,9 +63,24 @@ class PostViewSet(BaseViewset[Post, User]):
     @action(
         methods=["GET"],
         detail=False,
-        url_path="timeline",
+        url_path="timeline/followings",
         permission_classes=[permissions.AuthorizedOnly],
     )
     def get_timeline(self, *args, **kwargs):
+        self.override_get_queryset(
+            lambda qs: qs.filter(
+                models.Q(user__followers__followed_by=self.request.user)
+                | models.Q(user=self.request.user)
+                | models.Q(has_repost=True)
+            )
+        )
 
+        return self.list(*args, **kwargs)
+
+    @action(
+        methods=["GET"], detail=False, url_path="timeline/global", permission_classes=[]
+    )
+    def get_global_timeline(self, *args, **kwargs):
+        self.ordering = ("-id",)
+        self.pagination_class = IdOrderedCursorPagination
         return self.list(*args, **kwargs)

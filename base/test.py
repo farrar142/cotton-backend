@@ -1,5 +1,6 @@
 import time
 from typing import Any, Callable, Concatenate, Mapping, ParamSpec, Self, TypeVar
+from django.conf import settings
 from django.http.response import HttpResponse
 from django.test import TestCase as TC, Client as C
 from django.contrib.auth import get_user_model
@@ -56,6 +57,10 @@ class Client(C):
 class TestCase(TC):
     client_class = Client
     client: Client = Client()
+
+    def __init__(self, methodName: str = "runTest") -> None:
+        settings.DEBUG = True
+        super().__init__(methodName)
 
     def setUp(self):
         User = get_user_model()

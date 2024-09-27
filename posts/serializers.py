@@ -3,7 +3,7 @@ from commons.serializers import BaseModelSerializer, serializers
 from users.models import User
 from users.serializers import UserSerializer
 
-from .models import Post, Favorite, Bookmark, Repost, Mention, models
+from .models import Post, Favorite, Bookmark, Repost, Mention, View, models
 
 
 class MentionSerializer(BaseModelSerializer[Mention]):
@@ -66,9 +66,11 @@ class PostSerializer(BaseModelSerializer[Post]):
             "text",
             "blocks",
             "created_at",
+            "has_view",
             "has_bookmark",
             "has_repost",
             "has_favorite",
+            "views_count",
             "favorites_count",
             "mentions",
             "relavant_repost",
@@ -80,10 +82,12 @@ class PostSerializer(BaseModelSerializer[Post]):
     )
     mentions = MentionSerializer(many=True, required=False)
 
+    has_view = serializers.BooleanField(read_only=True)
     has_favorite = serializers.BooleanField(read_only=True)
     has_bookmark = serializers.BooleanField(read_only=True)
     has_repost = serializers.BooleanField(read_only=True)
     favorites_count = serializers.IntegerField(read_only=True)
+    views_count = serializers.IntegerField(read_only=True)
     latest_date = serializers.DateTimeField(read_only=True)
     relavant_repost = serializers.SerializerMethodField()
 
@@ -106,6 +110,13 @@ class PostSerializer(BaseModelSerializer[Post]):
                 ]
             )
         return instance
+
+
+@inject_user
+class ViewSerializer(BaseModelSerializer[View]):
+    class Meta:
+        model = View
+        fields = ("id", "post", "created_at")
 
 
 @inject_user

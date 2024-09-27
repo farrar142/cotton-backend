@@ -1,11 +1,12 @@
 from typing import Callable, Generic, Self, TypeVar
+from django.apps import apps
+
 from rest_framework import exceptions
 
-from commons.requests import Request
 from commons.viewsets.base_viewsets import BaseViewset
 
 from users.models import User, models
-
+from ..tasks import create_child_model
 
 M = TypeVar("M", bound=models.Model)
 C = TypeVar("C", bound=models.Model)
@@ -13,18 +14,28 @@ U = TypeVar("U", bound=User)
 
 
 class create_bool_child_mixin(Generic[M]):
+    @property
+    def Model(self) -> type[M]:
+        splitted = self.model_path.split(".")
+        return apps.get_model(splitted[0], splitted[1])  # type:ignore
+
+    def get_qs(self, instance: M) -> models.Manager[M]:
+        return getattr(instance, self.child_str)
+
     def __init__(
         self,
+        model_path: str,
         url_path: str,
         override_get_qs: Callable[
             [BaseViewset[M, User], models.QuerySet[M]], models.QuerySet[M]
         ],
-        get_qs: Callable[[M], models.QuerySet[C]],
+        child_str: str,
     ):
-        self.url_path, self.override_get_qs, self.get_qs = (
+        self.model_path = model_path
+        self.url_path, self.override_get_qs, self.child_str = (
             url_path,
             override_get_qs,
-            get_qs,
+            child_str,
         )
 
     def __call__(self, kls: type[BaseViewset[M, User]]) -> type[BaseViewset[M, User]]:
@@ -50,7 +61,13 @@ class create_bool_child_mixin(Generic[M]):
             def _create_items():
                 def create_items(inner: Self, *args, **kwargs):
                     instance = inner.get_object()
-                    self.get_qs(instance).create(user=inner.request.user)
+                    create_child_model.delay(
+                        self.model_path,
+                        self.child_str,
+                        instance.pk,
+                        inner.request.user.pk,
+                    )
+                    # self.get_qs(instance).create(user=inner.request.user)
                     return inner.result_response(True)
 
                 create_items.__name__ = f"create_{self.url_path}"
@@ -66,9 +83,9 @@ class create_bool_child_mixin(Generic[M]):
                         .first()
                     )
                     if not favorite:
-                        return inner.result_response(False, 204)
+                        return inner.Response(status=204)
                     favorite.delete()
-                    return inner.result_response(True, 204)
+                    return inner.Response(status=204)
 
                 delete_items.__name__ = f"delete_{self.url_path}"
                 return delete_items

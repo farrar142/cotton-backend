@@ -9,14 +9,17 @@ from users.models import User
 
 class Post(CommonModel):
     text = models.TextField(max_length=1024)
-    blocks = models.JSONField(default=[])
+    blocks = models.JSONField(default=list)
 
+    views: "models.Manager[View]"
     favorites: "models.Manager[Favorite]"
     bookmarks: "models.Manager[Bookmark]"
     reposts: "models.Manager[Repost]"
     mentions: "models.Manager[Mention]"
 
     favorites_count = make_property_field(0)
+    views_count = make_property_field(0)
+    has_views = make_property_field(False)
     has_favorite = make_property_field(False)
     has_bookmark = make_property_field(False)
     has_repost = make_property_field(False)
@@ -41,20 +44,39 @@ class Post(CommonModel):
                 cls.get_latest_relevant_repost(user=user),
             )
             .annotate(
+                views_count=cls.get_views_count(),
                 favorites_count=cls.get_favorites_count(),
+                has_view=cls.get_has_view(user),
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
                 has_repost=cls.get_has_repost(user),
                 latest_date=models.functions.Coalesce(
                     models.Subquery(
                         Repost.objects.filter(post=models.OuterRef("pk"))
-                        .filter(user__followers__followed_by=user)
+                        .filter(
+                            models.Q(user__followers__followed_by=user)
+                            | models.Q(user=user)
+                        )
                         .order_by("-created_at")
                         .values("created_at")[:1],
                     ),
                     models.F("created_at"),
                 ),
             )
+        )
+
+    @classmethod
+    def get_views_count(
+        cls,
+    ):
+        return models.Count("views")
+
+    @classmethod
+    def get_has_view(cls, user: AbstractBaseUser | None = None):
+        if user == None:
+            return models.Value(False)
+        return models.Exists(
+            View.objects.filter(user=user, post_id=models.OuterRef("pk"))
         )
 
     @classmethod
@@ -89,16 +111,26 @@ class Post(CommonModel):
 
     @classmethod
     def get_latest_relevant_repost(cls, user: AbstractBaseUser | None):
+        if user == None:
+            return models.Prefetch(
+                "reposts",
+                Repost.objects.filter(pk=0).order_by("-created_at")[:1],
+                to_attr="relavant_repost",
+            )
 
         return models.Prefetch(
             "reposts",
             Repost.objects.prefetch_related(
                 models.Prefetch("user", User.concrete_queryset(user=user))
             )
-            .filter(user__followers__followed_by=user)
+            .filter(models.Q(user__followers__followed_by=user) | models.Q(user=user))
             .order_by("-created_at")[:1],
             to_attr="relavant_repost",
         )
+
+
+class View(CommonModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="views")
 
 
 class Favorite(CommonModel):
