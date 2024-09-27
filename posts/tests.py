@@ -1,3 +1,4 @@
+import base64
 from django.conf import settings
 from django.db import connection
 
@@ -90,6 +91,24 @@ class TestPosts(TestCase):
         resp = self.client.post(f"/posts/{post_id}/reposts/")
         self.assertEqual(resp.status_code, 201)
         resp = self.client.get(f"/posts/{post_id}/")
+        self.pprint(resp.json())
+
+    def test_image(self):
+        with open("./commons/cat.jpg", "rb") as clipped_file:
+            clipped_image = clipped_file.read()
+        b64_str = base64.b64encode(clipped_image)
+        builder = BlockTextBuilder().text(value="hello")
+        self.client.login(self.user)
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user.pk)],
+                images=[dict(url=b64_str.decode())],
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
         self.pprint(resp.json())
 
 

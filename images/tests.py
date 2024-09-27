@@ -10,8 +10,9 @@ class TestImage(TestCase):
         b64_str = base64.b64encode(clipped_image)
         from .serializers import ImageSerializer
 
-        serializer = ImageSerializer(data=dict(url=b64_str.decode("utf-8")))
+        serializer = ImageSerializer(
+            data=[dict(url=b64_str.decode("utf-8"))], many=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        serializer.instance.refresh_from_db()
         print(serializer.data)

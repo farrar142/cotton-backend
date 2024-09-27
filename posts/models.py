@@ -3,13 +3,14 @@ from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 
 from commons.model_utils import make_property_field
 from commons.models import CommonModel
-
 from users.models import User
+from images.models import Image
 
 
 class Post(CommonModel):
     text = models.TextField(max_length=1024)
     blocks = models.JSONField(default=list)
+    images: "models.ManyToManyField[Image,Post]" = models.ManyToManyField(Image)
 
     views: "models.Manager[View]"
     favorites: "models.Manager[Favorite]"
@@ -33,6 +34,7 @@ class Post(CommonModel):
             super()
             .concrete_queryset(user=user)
             .prefetch_related(
+                "images",
                 models.Prefetch(
                     "mentions",
                     Mention.objects.prefetch_related(

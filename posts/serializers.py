@@ -1,5 +1,6 @@
 from commons.decorators import inject_user
 from commons.serializers import BaseModelSerializer, serializers
+from images.serializers import ImageSerializer
 from users.models import User
 from users.serializers import UserSerializer
 
@@ -75,12 +76,14 @@ class PostSerializer(BaseModelSerializer[Post]):
             "mentions",
             "relavant_repost",
             "latest_date",
+            "images",
         )
 
     blocks = serializers.ListField(
         child=serializers.ListField(child=PlainTextSerializer())
     )
     mentions = MentionSerializer(many=True, required=False)
+    images = ImageSerializer(many=True, required=False)
 
     has_view = serializers.BooleanField(read_only=True)
     has_favorite = serializers.BooleanField(read_only=True)
@@ -101,6 +104,7 @@ class PostSerializer(BaseModelSerializer[Post]):
 
     def create(self, validated_data):
         mentions = validated_data.pop("mentions", [])
+        images = validated_data.pop("images", [])
         instance: Post = super().create(validated_data)
         if instance:
             instance.mentions.bulk_create(
@@ -109,6 +113,12 @@ class PostSerializer(BaseModelSerializer[Post]):
                     for mention in mentions
                 ]
             )
+        if images:
+            ser = ImageSerializer(data=self.initial_data["images"], many=True)
+            ser.is_valid(raise_exception=True)
+            ser.save()
+            instance.images.add(*ser.instance)
+            instance.refresh_from_db()
         return instance
 
 
