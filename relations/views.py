@@ -57,3 +57,12 @@ class FollowViewset(BaseViewset[User, User]):
 
     def destroy(self, request, *args, **kwargs):
         raise exceptions.NotFound
+
+    @action(methods=["GET"], detail=False, url_path=r"(?P<username>[\w-]+)")
+    def get_profile(self, *args, **kwargs):
+        instance = self.get_queryset().filter(username=kwargs["username"]).first()
+        if not instance:
+            raise exceptions.NotFound
+        Serializer = self.get_serializer_class()
+        ser = Serializer(instance=instance, context=self.get_serializer_context())
+        return self.Response(ser.data)

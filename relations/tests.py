@@ -82,3 +82,9 @@ class TestRelation(TestCase):
         self.assertEqual(resp.status_code, 204)
         resp = self.client.get("/relations/mutual_followings/")
         self.assertEqual(resp.json()["results"].__len__(), 0)
+
+    def test_get_profile(self):
+        self.client.login(self.user)
+        resp = self.client.get(f"/relations/{self.user2.username}/")
+        self.assertEqual(resp.status_code, 200)
+        print(resp.json())
