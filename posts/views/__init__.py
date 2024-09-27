@@ -61,6 +61,17 @@ class PostViewSet(BaseViewset[Post, User]):
             return Post.concrete_queryset(user=self.request.user)
         return Post.concrete_queryset()
 
+    @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
+    def get_user_timeline(self, *args, **kwargs):
+        user = User.objects.filter(username=kwargs[""]).first()
+        if not user:
+            raise self.exceptions.NotFound
+        self.queryset = Post.concrete_queryset(self.request.user, user)
+        self.override_get_queryset(
+            lambda qs: qs.filter(models.Q(user=user) | models.Q(reposts__user=user))
+        )
+        return self.list(*args, **kwargs)
+
     @action(
         methods=["GET"],
         detail=False,

@@ -27,7 +27,7 @@ class Post(CommonModel):
     relavant_repost: "list[Repost]|None"  # prefetch의 to_attr은 getter setter를 통하여 할당이 불가능해 보임
 
     @classmethod
-    def concrete_queryset(cls, user: AbstractBaseUser | None = None):
+    def __concrete_qs_base(cls, user: AbstractBaseUser | None = None):
         if user and not user.is_authenticated:
             user = None
         return (
@@ -52,19 +52,33 @@ class Post(CommonModel):
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
                 has_repost=cls.get_has_repost(user),
-                latest_date=models.functions.Coalesce(
-                    models.Subquery(
-                        Repost.objects.filter(post=models.OuterRef("pk"))
-                        .filter(
-                            models.Q(user__followers__followed_by=user)
-                            | models.Q(user=user)
-                        )
-                        .order_by("-created_at")
-                        .values("created_at")[:1],
-                    ),
-                    models.F("created_at"),
-                ),
             )
+        )
+
+    @classmethod
+    def concrete_queryset(
+        cls,
+        user: AbstractBaseUser | None = None,
+        target_user: AbstractBaseUser | None = None,
+    ):
+        if user and not user.is_authenticated:
+            user = None
+        repost_filter = models.Q(user__followers__followed_by=user) | models.Q(
+            user=user
+        )
+        if target_user and not target_user.is_authenticated:
+            target_user = None
+            repost_filter = models.Q(user=user) | models.Q(user=target_user)
+        return cls.__concrete_qs_base(user).annotate(
+            latest_date=models.functions.Coalesce(
+                models.Subquery(
+                    Repost.objects.filter(post=models.OuterRef("pk"))
+                    .filter(repost_filter)
+                    .order_by("-created_at")
+                    .values("created_at")[:1],
+                ),
+                models.F("created_at"),
+            ),
         )
 
     @classmethod

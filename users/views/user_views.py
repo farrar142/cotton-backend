@@ -11,7 +11,7 @@ from ..serializers import UserSerializer, UserUpsertSerializer
 
 
 class UserViewSet(BaseViewset[User, User]):
-    permission_classes = [permissions.AuthorizedOrReadOnly]
+    permission_classes = [permissions.OwnerOrReadOnly]
     queryset = User.concrete_queryset()
 
     read_only_serializer = UserSerializer

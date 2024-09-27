@@ -21,6 +21,9 @@ class AuthorizedOrReadOnly(BasePermission):
             return False
         return True
 
+
+class OwnerOrReadOnly(AuthorizedOrReadOnly):
+
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
@@ -29,13 +32,6 @@ class AuthorizedOrReadOnly(BasePermission):
         if request.user.pk != getattr(obj, "user_id", getattr(obj, "id", None)):
             return False
         return True
-
-
-class OwnerOrReadOnly(AuthorizedOrReadOnly):
-    def has_object_permission(self, request, view, obj):
-        if obj.user_id == request.user.pk:
-            return True
-        return False
 
 
 class AdminOrReadOnly(BasePermission):

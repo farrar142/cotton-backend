@@ -50,6 +50,7 @@ class TestPosts(TestCase):
         pass
 
     def test_timeline_reposts_upper(self):
+        Post.objects.all().delete()
         posts: list[Post] = []
         for i in range(0, 3):
             posts.append(Post(user=self.user, text=f"hello world {i}"))
@@ -73,7 +74,6 @@ class TestPosts(TestCase):
         # 리포스트 된 게시글은 리포스트 된글의 시점에따라 상단으로 올라오도록 함
         resp = self.client.get("/posts/timeline/followings/")
         self.assertEqual(resp.json()["results"][0]["id"], fp.pk)
-        self.pprint(resp.json()["results"][0]["relavant_repost"])
 
     def test_relavant_repost(self):
         self.client.login(self.user)
@@ -91,7 +91,6 @@ class TestPosts(TestCase):
         resp = self.client.post(f"/posts/{post_id}/reposts/")
         self.assertEqual(resp.status_code, 201)
         resp = self.client.get(f"/posts/{post_id}/")
-        self.pprint(resp.json())
 
     def test_image(self):
         with open("./commons/cat.jpg", "rb") as clipped_file:
@@ -109,7 +108,6 @@ class TestPosts(TestCase):
             ),
         )
         self.assertEqual(resp.status_code, 201)
-        self.pprint(resp.json())
 
 
 class TestPostsBase(TestCase):
