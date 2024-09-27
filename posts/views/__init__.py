@@ -63,7 +63,7 @@ class PostViewSet(BaseViewset[Post, User]):
 
     @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
     def get_user_timeline(self, *args, **kwargs):
-        user = User.objects.filter(username=kwargs[""]).first()
+        user = User.objects.filter(username=kwargs["username"]).first()
         if not user:
             raise self.exceptions.NotFound
         self.queryset = Post.concrete_queryset(self.request.user, user)
