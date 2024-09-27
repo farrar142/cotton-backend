@@ -114,10 +114,12 @@ class PostSerializer(BaseModelSerializer[Post]):
                 ]
             )
         if images:
-            ser = ImageSerializer(data=self.initial_data["images"], many=True)
+            ser = ImageSerializer(
+                data=self.initial_data["images"], many=True  # type:ignore
+            )
             ser.is_valid(raise_exception=True)
             ser.save()
-            instance.images.add(*ser.instance)
+            instance.images.add(*ser.instance)  # type:ignore
             instance.refresh_from_db()
         return instance
 
