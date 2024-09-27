@@ -52,6 +52,7 @@ class PostViewSet(BaseViewset[Post, User]):
     pagination_class = LatestOrderedCursorPagination
     ordering = ("-latest_date",)
     ordering_fields = ("-latest_date", "-id")
+    filterset_fields = ("user__username",)
 
     action = BaseViewset.action
 

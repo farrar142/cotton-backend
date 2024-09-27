@@ -51,6 +51,11 @@ class BaseViewset(CustomFiltersetMixin[M, U], ModelViewSet, Generic[M, U]):
         self.pagination_class = None
         return self.list(*args, **kwargs)
 
+    @decorators.action(methods=["GET"], detail=False, url_path="count")
+    def get_count(self, *args, **kwargs):
+        qs = self.filter_queryset(self.get_queryset())
+        return self.Response({"count": qs.count()})
+
     def result_response(self, result: bool, status_code=201):
         return self.Response(dict(is_success=result), status=status_code)
 
