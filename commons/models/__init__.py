@@ -1,7 +1,5 @@
-from typing import Any, TypeVar
-import uuid
+from typing import Any
 from django.db import models
-from django.db.models.manager import Manager
 
 from users.models import User
 

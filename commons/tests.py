@@ -1,3 +1,4 @@
+import base64
 import os
 from time import sleep
 import redis
@@ -5,6 +6,7 @@ import redis
 
 from django.test import TestCase
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class TestCommon(TestCase):

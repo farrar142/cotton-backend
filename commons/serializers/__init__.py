@@ -3,11 +3,11 @@ from typing import Any, Generic, Sequence, TypeVar
 import base64
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import models
 
 from rest_framework import serializers, exceptions
 from rest_framework.serializers import ModelSerializer, Serializer
 
-from django.db import models
 
 M = TypeVar("M", bound=models.Model)
 
