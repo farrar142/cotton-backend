@@ -70,6 +70,7 @@ class User(UserAbstract):
         return (
             super()
             .concrete_queryset(*args, **kwargs)
+            .select_related("profile_image")
             .annotate(
                 followers_count=cls.get_followers_count(),
                 followings_count=cls.get_followings_count(),
