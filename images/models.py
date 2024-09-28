@@ -39,7 +39,17 @@ medium = image_upload_to("medium")
 
 
 class Image(models.Model):
-    url = models.ImageField(upload_to=original)
+    url = models.ImageField(upload_to=original, null=True)
     small = models.ImageField(upload_to=small, null=True)  # 50
     medium = models.ImageField(upload_to=medium, null=True)  # 200
     large = models.ImageField(upload_to=image_upload_to("large"), null=True)  # 600
+
+    def save(self, *args, **kwargs) -> None:
+        url = None
+        if self.pk == None:
+            url = self.url
+            self.url = None
+        super().save(*args, **kwargs)
+        if url:
+            self.url = url
+            self.save()
