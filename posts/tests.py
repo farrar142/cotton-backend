@@ -127,6 +127,9 @@ class TestPosts(TestCase):
         self.assertEqual(resp.status_code, 201)
         post_id = resp.json()["id"]
 
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        self.assertEqual(resp.json()["results"].__len__(), 0)
+
         resp = self.client.post(
             "/posts/",
             dict(
@@ -138,6 +141,9 @@ class TestPosts(TestCase):
 
         resp = self.client.get(f"/posts/{post_id}/")
         self.assertEqual(resp.json().get("replies_count"), 1)
+
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        self.assertEqual(resp.json()["results"].__len__(), 1)
 
 
 class TestPostsBase(TestCase):

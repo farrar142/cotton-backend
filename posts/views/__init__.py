@@ -71,6 +71,16 @@ class PostViewSet(BaseViewset[Post, User]):
         return self.list(*args, **kwargs)
 
     @action(
+        methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)/replies"
+    )
+    def get_users_replies_timeline(self, *args, **kwargs):
+        user = self.get_user_from_queries()
+        self.get_queryset = lambda: Post.concrete_queryset(
+            self.request.user, user
+        ).filter(parent__isnull=False, user=user)
+        return self.list(*args, **kwargs)
+
+    @action(
         methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)/media"
     )
     def get_users_media_timeline(self, *args, **kwargs):
