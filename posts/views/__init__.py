@@ -82,7 +82,7 @@ class PostViewSet(BaseViewset[Post, User]):
             lambda qs: qs.annotate(
                 row_number=models.Window(
                     expression=models.functions.RowNumber(),
-                    partition_by=models.F("origin"),
+                    partition_by=[models.F("origin"), models.F("user_id")],
                     order_by=models.F("created_at").desc(),
                 )
             ).filter(parent__isnull=False, user=user, row_number=1)

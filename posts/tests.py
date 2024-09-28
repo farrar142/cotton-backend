@@ -150,7 +150,7 @@ class TestPosts(TestCase):
 
         resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
         self.assertEqual(resp.json()["results"].__len__(), 1)
-
+        self.client.login(self.user2)
         resp = self.client.post(
             "/posts/",
             dict(
@@ -166,7 +166,7 @@ class TestPosts(TestCase):
         self.assertEqual(resp.json()["depth"], 2)
         post3_id = resp.json()["id"]
 
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        resp = self.client.get(f"/posts/timeline/{self.user2.username}/replies/")
         self.assertEqual(resp.json()["results"].__len__(), 1)
         self.assertEqual(resp.json()["results"][0]["depth"], 2)
         self.assertEqual(resp.json()["results"][0]["origin"], post_id)
