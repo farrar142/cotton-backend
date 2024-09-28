@@ -4,6 +4,8 @@ from commons import paginations
 from commons import permissions
 from commons.viewsets import BaseViewset
 
+from images.models import Image
+from images.serializers import ImageSerializer
 from users.models import User, models
 from ..services.post_service import PostService
 from ..models import Post
@@ -53,15 +55,29 @@ class PostViewSet(BaseViewset[Post, User]):
             return Post.concrete_queryset(user=self.request.user)
         return Post.concrete_queryset()
 
-    @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
-    def get_user_timeline(self, *args, **kwargs):
-        user = User.objects.filter(username=kwargs["username"]).first()
+    def get_user_from_queries(self):
+        user = User.objects.filter(username=self.kwargs.get("username", None)).first()
         if not user:
             raise self.exceptions.NotFound
+        return user
+
+    @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
+    def get_user_timeline(self, *args, **kwargs):
+        user = self.get_user_from_queries()
         self.queryset = Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(
             lambda qs: qs.filter(models.Q(user=user) | models.Q(reposts__user=user))
         )
+        return self.list(*args, **kwargs)
+
+    @action(
+        methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)/media"
+    )
+    def get_users_media_timeline(self, *args, **kwargs):
+        user = self.get_user_from_queries()
+        self.get_queryset = lambda: Image.objects.filter(post__user=user)  # type:ignore
+        self.read_only_serializer = ImageSerializer  # type:ignore
+        self.ordering = ("-created_at",)
         return self.list(*args, **kwargs)
 
     @action(
@@ -70,9 +86,7 @@ class PostViewSet(BaseViewset[Post, User]):
         url_path=r"timeline/(?P<username>[\w-]+)/favorites",
     )
     def get_users_favorite_timeline(self, *args, **kwargs):
-        user = User.objects.filter(username=kwargs["username"]).first()
-        if not user:
-            raise self.exceptions.NotFound
+        user = self.get_user_from_queries()
         self.queryset = Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(lambda qs: qs.filter(favorites__user=user))
         self.ordering = ("-favorites__created_at",)

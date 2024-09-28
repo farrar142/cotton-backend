@@ -1,12 +1,11 @@
 import os
 import uuid
 from typing import TypeVar
-from uuid import uuid4
+
 from django.db import models
-
 from django.utils.deconstruct import deconstructible
-
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 # Create your models here.
 
@@ -39,6 +38,7 @@ medium = image_upload_to("medium")
 
 
 class Image(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     url = models.ImageField(upload_to=original, null=True)
     small = models.ImageField(upload_to=small, null=True)  # 50
     medium = models.ImageField(upload_to=medium, null=True)  # 200

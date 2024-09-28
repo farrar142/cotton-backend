@@ -109,6 +109,10 @@ class TestPosts(TestCase):
         )
         self.assertEqual(resp.status_code, 201)
 
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/media/")
+        self.assertEqual(resp.status_code, 200)
+        self.pprint(resp.json())
+
 
 class TestPostsBase(TestCase):
     def setUp(self):
