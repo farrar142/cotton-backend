@@ -77,9 +77,26 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_users_replies_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
-        self.get_queryset = lambda: Post.concrete_queryset(
-            self.request.user, user
-        ).filter(parent__isnull=False, user=user)
+        self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
+        self.override_get_queryset(
+            lambda qs: qs.annotate(
+                row_number=models.Window(
+                    expression=models.functions.RowNumber(),
+                    partition_by=models.F("origin"),
+                    order_by=models.F("created_at").desc(),
+                )
+            ).filter(parent__isnull=False, user=user, row_number=1)
+        )
+        # is_last_child = models.Window(
+        #     expression=models.functions.FirstValue("id"),
+        #     partition_by=models.F("origin"),
+        #     order_by=models.F("created_at").desc(),
+        # )
+        # self.override_get_queryset(
+        #     lambda qs: qs.annotate(last_child_id=is_last_child)
+        #     .filter(last_child_id=models.F("pk"))
+        #     .filter(parent__isnull=False, user=user)
+        # )
         return self.list(*args, **kwargs)
 
     @action(

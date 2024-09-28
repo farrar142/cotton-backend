@@ -143,12 +143,34 @@ class TestPosts(TestCase):
         self.assertEqual(resp.json()["parent"], post_id)
         self.assertEqual(resp.json()["origin"], post_id)
         self.assertEqual(resp.json()["depth"], 1)
+        post2_id = resp.json()["id"]
 
         resp = self.client.get(f"/posts/{post_id}/")
         self.assertEqual(resp.json().get("replies_count"), 1)
 
         resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
         self.assertEqual(resp.json()["results"].__len__(), 1)
+
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                parent=post2_id,
+                origin=post_id,
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json()["parent"], post2_id)
+        self.assertEqual(resp.json()["origin"], post_id)
+        self.assertEqual(resp.json()["depth"], 2)
+        post3_id = resp.json()["id"]
+
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        self.assertEqual(resp.json()["results"].__len__(), 1)
+        self.assertEqual(resp.json()["results"][0]["depth"], 2)
+        self.assertEqual(resp.json()["results"][0]["origin"], post_id)
+        self.assertEqual(resp.json()["results"][0]["id"], post3_id)
 
 
 class TestPostsBase(TestCase):
