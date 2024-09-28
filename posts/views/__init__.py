@@ -66,7 +66,9 @@ class PostViewSet(BaseViewset[Post, User]):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(
-            lambda qs: qs.filter(models.Q(user=user) | models.Q(reposts__user=user))
+            lambda qs: qs.filter(parent__isnull=True).filter(
+                models.Q(user=user) | models.Q(reposts__user=user)
+            )
         )
         return self.list(*args, **kwargs)
 
