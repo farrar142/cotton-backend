@@ -8,6 +8,9 @@ from images.models import Image
 
 
 class Post(CommonModel):
+    parent = models.ForeignKey(
+        "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
+    )
     text = models.TextField(max_length=1024)
     blocks = models.JSONField(default=list)
     images: "models.ManyToManyField[Image,Post]" = models.ManyToManyField(Image)
@@ -20,6 +23,7 @@ class Post(CommonModel):
 
     favorites_count = make_property_field(0)
     views_count = make_property_field(0)
+    replies_count = make_property_field(0)
     has_views = make_property_field(False)
     has_favorite = make_property_field(False)
     has_bookmark = make_property_field(False)
@@ -48,6 +52,7 @@ class Post(CommonModel):
             .annotate(
                 views_count=cls.get_views_count(),
                 favorites_count=cls.get_favorites_count(),
+                replies_count=cls.get_replies_count(),
                 has_view=cls.get_has_view(user),
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
@@ -100,6 +105,10 @@ class Post(CommonModel):
         cls,
     ):
         return models.Count("favorites")
+
+    @classmethod
+    def get_replies_count(cls):
+        return models.Count("replies")
 
     @classmethod
     def get_has_favorite(cls, user: AbstractBaseUser | None = None):

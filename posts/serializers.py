@@ -77,8 +77,13 @@ class PostSerializer(BaseModelSerializer[Post]):
             "relavant_repost",
             "latest_date",
             "images",
+            "parent",
+            "replies_count",
         )
 
+    parent = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(), required=False
+    )
     blocks = serializers.ListField(
         child=serializers.ListField(child=PlainTextSerializer())
     )
@@ -91,6 +96,7 @@ class PostSerializer(BaseModelSerializer[Post]):
     has_repost = serializers.BooleanField(read_only=True)
     favorites_count = serializers.IntegerField(read_only=True)
     views_count = serializers.IntegerField(read_only=True)
+    replies_count = serializers.IntegerField(read_only=True)
     latest_date = serializers.DateTimeField(read_only=True)
     relavant_repost = serializers.SerializerMethodField()
 

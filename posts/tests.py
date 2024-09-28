@@ -113,6 +113,32 @@ class TestPosts(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.pprint(resp.json())
 
+    def test_replies(self):
+        builder = BlockTextBuilder().text(value="hello")
+        self.client.login(self.user)
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user.pk)],
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        post_id = resp.json()["id"]
+
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(), blocks=builder.get_json(), parent=post_id
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json()["parent"], post_id)
+
+        resp = self.client.get(f"/posts/{post_id}/")
+        self.assertEqual(resp.json().get("replies_count"), 1)
+
 
 class TestPostsBase(TestCase):
     def setUp(self):
