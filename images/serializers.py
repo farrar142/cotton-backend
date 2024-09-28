@@ -18,6 +18,5 @@ class ImageSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         instance = super().create(validated_data)
-        print(f"{instance.pk=}")
         resize_image_model.delay(instance.pk)
         return instance

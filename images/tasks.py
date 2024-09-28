@@ -33,6 +33,8 @@ def resize_image_model(image_id):
     image = Image.objects.filter(id=image_id).first()
     if not image:
         return
+    if not image.url:
+        return
     file = image.url.open("rb")
     image.small = resize_image(file, 50)  # type:ignore
     image.medium = resize_image(file, 200)  # type:ignore
