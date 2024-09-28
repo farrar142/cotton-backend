@@ -112,6 +112,12 @@ class Post(CommonModel):
 
     @classmethod
     def get_replies_count(cls):
+        return models.Subquery(
+            Post.objects.filter(parent=models.OuterRef("pk"))
+            .order_by("parent")
+            .annotate(count=models.Count("pk"))
+            .values("count")
+        )
         return models.Count("replies")
 
     @classmethod

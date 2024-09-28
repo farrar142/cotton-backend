@@ -172,6 +172,12 @@ class TestPosts(TestCase):
         self.assertEqual(resp.json()["results"][0]["origin"], post_id)
         self.assertEqual(resp.json()["results"][0]["id"], post3_id)
 
+        resp = self.client.get(f"/posts/{post_id}/")
+        self.assertEqual(resp.json()["replies_count"], 1)
+
+        resp = self.client.get(f"/posts/{post2_id}/")
+        self.assertEqual(resp.json()["replies_count"], 1)
+
 
 class TestPostsBase(TestCase):
     def setUp(self):
