@@ -64,7 +64,7 @@ class PostViewSet(BaseViewset[Post, User]):
     @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
     def get_user_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
-        self.queryset = Post.concrete_queryset(self.request.user, user)
+        self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(
             lambda qs: qs.filter(models.Q(user=user) | models.Q(reposts__user=user))
         )
@@ -75,9 +75,15 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_users_media_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
-        self.get_queryset = lambda: Image.objects.filter(post__user=user)  # type:ignore
-        self.read_only_serializer = ImageSerializer  # type:ignore
-        self.ordering = ("-created_at",)
+        self.get_queryset = (
+            lambda: Post.concrete_queryset(self.request.user, user)
+            .annotate(
+                has_image=models.Exists(
+                    Image.objects.filter(post=models.OuterRef("pk"))
+                )
+            )
+            .filter(has_image=True, user=user)
+        )
         return self.list(*args, **kwargs)
 
     @action(
@@ -87,7 +93,7 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_users_favorite_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
-        self.queryset = Post.concrete_queryset(self.request.user, user)
+        self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(lambda qs: qs.filter(favorites__user=user))
         self.ordering = ("-favorites__created_at",)
         return self.list(*args, **kwargs)
