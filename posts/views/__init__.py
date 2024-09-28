@@ -87,6 +87,7 @@ class PostViewSet(BaseViewset[Post, User]):
                 )
             ).filter(parent__isnull=False, user=user, row_number=1)
         )
+        self.ordering = ("-created_at",)
         # is_last_child = models.Window(
         #     expression=models.functions.FirstValue("id"),
         #     partition_by=models.F("origin"),
