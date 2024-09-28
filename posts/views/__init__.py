@@ -12,14 +12,6 @@ from ..serializers import PostSerializer, FavoriteSerializer
 from .child_views import create_bool_child_mixin
 
 
-class LatestOrderedCursorPagination(paginations.CursorPagination):
-    ordering = ("-latest_date", "-id")
-
-
-class IdOrderedCursorPagination(paginations.CursorPagination):
-    ordering = ("-id",)
-
-
 @create_bool_child_mixin[Post](
     model_path="posts.Post",
     url_path="views",
@@ -49,8 +41,8 @@ class PostViewSet(BaseViewset[Post, User]):
     queryset = Post.concrete_queryset()
     read_only_serializer = PostSerializer
     upsert_serializer = PostSerializer
-    pagination_class = LatestOrderedCursorPagination
-    ordering = ("-latest_date",)
+    pagination_class = paginations.CursorPagination
+    ordering = ("-latest_date", "-id")
     ordering_fields = ("-latest_date", "-id")
     filterset_fields = ("user__username",)
 
@@ -75,6 +67,20 @@ class PostViewSet(BaseViewset[Post, User]):
     @action(
         methods=["GET"],
         detail=False,
+        url_path=r"timeline/(?P<username>[\w-]+)/favorites",
+    )
+    def get_users_favorite_timeline(self, *args, **kwargs):
+        user = User.objects.filter(username=kwargs["username"]).first()
+        if not user:
+            raise self.exceptions.NotFound
+        self.queryset = Post.concrete_queryset(self.request.user, user)
+        self.override_get_queryset(lambda qs: qs.filter(favorites__user=user))
+        self.ordering = ("-favorites__created_at",)
+        return self.list(*args, **kwargs)
+
+    @action(
+        methods=["GET"],
+        detail=False,
         url_path="timeline/followings",
         permission_classes=[permissions.AuthorizedOnly],
     )
@@ -94,5 +100,4 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_global_timeline(self, *args, **kwargs):
         self.ordering = ("-id",)
-        self.pagination_class = IdOrderedCursorPagination
         return self.list(*args, **kwargs)

@@ -7,6 +7,11 @@ from rest_framework.pagination import (
 class CursorPagination(_CursorPagination):
     ordering = "-id"
 
+    def get_ordering(self, request, queryset, view):
+        if hasattr(view, "ordering"):
+            return view.ordering  # type:ignore
+        return super().get_ordering(request, queryset, view)
+
 
 class PageNumberPagination(_PageNumberPagination):
     ordering = "-id"
