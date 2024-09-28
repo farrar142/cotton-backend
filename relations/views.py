@@ -58,7 +58,12 @@ class FollowViewset(BaseViewset[User, User]):
     def destroy(self, request, *args, **kwargs):
         raise exceptions.NotFound
 
-    @action(methods=["GET"], detail=False, url_path=r"(?P<username>[\w-]+)")
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path=r"(?P<username>[\w-]+)",
+        permission_classes=[],
+    )
     def get_profile(self, *args, **kwargs):
         instance = self.get_queryset().filter(username=kwargs["username"]).first()
         if not instance:
