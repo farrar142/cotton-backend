@@ -78,10 +78,15 @@ class PostSerializer(BaseModelSerializer[Post]):
             "latest_date",
             "images",
             "parent",
+            "origin",
             "replies_count",
+            "depth",
         )
 
     parent = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(), required=False
+    )
+    origin = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(), required=False
     )
     blocks = serializers.ListField(
@@ -111,6 +116,9 @@ class PostSerializer(BaseModelSerializer[Post]):
     def create(self, validated_data):
         mentions = validated_data.pop("mentions", [])
         images = validated_data.pop("images", [])
+        parent = validated_data.get("parent", None)
+        if parent:
+            validated_data["depth"] = parent.depth + 1
         instance: Post = super().create(validated_data)
         if instance:
             instance.mentions.bulk_create(

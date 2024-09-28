@@ -8,9 +8,13 @@ from images.models import Image
 
 
 class Post(CommonModel):
+    origin = models.ForeignKey(
+        "Post", on_delete=models.DO_NOTHING, related_name="childrens", null=True
+    )
     parent = models.ForeignKey(
         "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
     )
+    depth = models.IntegerField(default=0)
     text = models.TextField(max_length=1024)
     blocks = models.JSONField(default=list)
     images: "models.ManyToManyField[Image,Post]" = models.ManyToManyField(Image)

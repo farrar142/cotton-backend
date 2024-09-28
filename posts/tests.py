@@ -133,11 +133,16 @@ class TestPosts(TestCase):
         resp = self.client.post(
             "/posts/",
             dict(
-                text=builder.get_plain_text(), blocks=builder.get_json(), parent=post_id
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                parent=post_id,
+                origin=post_id,
             ),
         )
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.json()["parent"], post_id)
+        self.assertEqual(resp.json()["origin"], post_id)
+        self.assertEqual(resp.json()["depth"], 1)
 
         resp = self.client.get(f"/posts/{post_id}/")
         self.assertEqual(resp.json().get("replies_count"), 1)
