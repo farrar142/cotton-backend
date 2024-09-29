@@ -1,3 +1,4 @@
+from typing import Any, Callable
 from rest_framework import exceptions
 from commons.serializers import BaseModelSerializer, serializers
 from images.serializers import ImageSerializer
@@ -16,9 +17,11 @@ class UserBaseSerializer(BaseModelSerializer[User]):
             "registered_at",
             "bio",
             "profile_image",
+            "header_image",
         )
 
     bio = serializers.CharField(max_length=511, required=False)
+    header_image = ImageSerializer(required=False)
     profile_image = ImageSerializer(required=False)
 
 
@@ -47,23 +50,30 @@ class UserSerializer(UserBaseSerializer):
 class UserUpsertSerializer(BaseModelSerializer[User]):
     class Meta:
         model = User
-        fields = ("id", "bio", "profile_image", "nickname", "username")
+        fields = ("id", "bio", "profile_image", "header_image", "nickname", "username")
 
     bio = serializers.CharField(max_length=511, required=False)
+    header_image = ImageSerializer(required=False)
     profile_image = ImageSerializer(required=False)
 
     def create(self, validated_data):
         raise exceptions.MethodNotAllowed("post")
 
     def update(self, instance, validated_data):
-        profile_image = validated_data.pop("profile_image", None)
+        validated_data.pop("header_image", None)
+        validated_data.pop("profile_image", None)
         instance = super().update(instance, validated_data)
-        if profile_image:
-            serializer = ImageSerializer(
-                data=self.initial_data["profile_image"]  # type:ignore
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            instance.profile_image = serializer.instance
-            instance.save()
+        self.create_image(instance, "profile_image")
+        self.create_image(instance, "header_image")
+
         return instance
+
+    def create_image(self, instance: User, key: str):
+        image = getattr(self.initial_data, key, None)
+        if not image:
+            return
+        serializer = ImageSerializer(data=image)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        setattr(instance, key, serializer.instance)
+        instance.save()

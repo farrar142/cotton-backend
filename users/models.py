@@ -40,7 +40,12 @@ class User(UserAbstract):
     is_registered = models.BooleanField(default=False)
     registered_at = models.DateTimeField(null=True)
     bio = models.CharField(max_length=511, default="")
-    profile_image = models.ForeignKey(Image, on_delete=models.SET_NULL, null=True)
+    header_image = models.ForeignKey(
+        Image, on_delete=models.SET_NULL, null=True, related_name="header_users"
+    )
+    profile_image = models.ForeignKey(
+        Image, on_delete=models.SET_NULL, null=True, related_name="profile_users"
+    )
 
     followings: "models.ManyToManyField[Follow,Self]" = models.ManyToManyField(
         "User",
