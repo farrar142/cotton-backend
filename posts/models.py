@@ -25,6 +25,9 @@ class Post(CommonModel):
     reposts: "models.Manager[Repost]"
     mentions: "models.Manager[Mention]"
 
+    reply_row_number_desc = make_property_field(
+        0
+    )  # origin에 대한 자신의 게시글을 마지막에 작성한 순서대로 나열한 값. reply확인에 사용
     favorites_count = make_property_field(0)
     views_count = make_property_field(0)
     replies_count = make_property_field(0)
@@ -61,6 +64,7 @@ class Post(CommonModel):
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
                 has_repost=cls.get_has_repost(user),
+                reply_row_number_desc=cls.get_reply_row_number_desc(),
             )
         )
 
@@ -94,7 +98,13 @@ class Post(CommonModel):
     def get_views_count(
         cls,
     ):
-        return models.Count("views")
+        return models.Subquery(
+            View.objects.filter(post=models.OuterRef("pk"))
+            .order_by("post")
+            .values("post")
+            .annotate(count=models.Count("pk"))
+            .values("count")
+        )
 
     @classmethod
     def get_has_view(cls, user: AbstractBaseUser | None = None):
@@ -108,13 +118,20 @@ class Post(CommonModel):
     def get_favorites_count(
         cls,
     ):
-        return models.Count("favorites")
+        return models.Subquery(
+            Favorite.objects.filter(post=models.OuterRef("pk"))
+            .order_by("post")
+            .values("post")
+            .annotate(count=models.Count("pk"))
+            .values("count")
+        )
 
     @classmethod
     def get_replies_count(cls):
         return models.Subquery(
             Post.objects.filter(parent=models.OuterRef("pk"))
             .order_by("parent")
+            .values("parent")
             .annotate(count=models.Count("pk"))
             .values("count")
         )
@@ -161,6 +178,28 @@ class Post(CommonModel):
             .filter(models.Q(user__followers__followed_by=user) | models.Q(user=user))
             .order_by("-created_at")[:1],
             to_attr="relavant_repost",
+        )
+
+    @classmethod
+    def get_reply_row_number_desc(cls):
+        return models.Case(
+            models.When(origin__isnull=True, then=models.Value(0)),
+            default=models.Window(
+                expression=models.functions.RowNumber(),
+                partition_by=[
+                    models.F("origin"),
+                    models.F("user_id"),
+                ],
+                order_by=models.F("created_at").desc(),
+            ),
+        )
+        return models.Window(
+            expression=models.functions.RowNumber(),
+            partition_by=[
+                models.F("origin"),
+                models.F("user_id"),
+            ],
+            order_by=models.F("created_at").desc(),
         )
 
 
