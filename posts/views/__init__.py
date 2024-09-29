@@ -66,9 +66,7 @@ class PostViewSet(BaseViewset[Post, User]):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(
-            lambda qs: qs.filter(parent__isnull=True).filter(
-                models.Q(user=user) | models.Q(reposts__user=user)
-            )
+            lambda qs: qs.filter(models.Q(user=user) | models.Q(reposts__user=user))
         )
         return self.list(*args, **kwargs)
 
@@ -79,25 +77,9 @@ class PostViewSet(BaseViewset[Post, User]):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(
-            lambda qs: qs.annotate(
-                row_number=models.Window(
-                    expression=models.functions.RowNumber(),
-                    partition_by=[models.F("origin"), models.F("user_id")],
-                    order_by=models.F("created_at").desc(),
-                )
-            ).filter(parent__isnull=False, user=user, row_number=1)
+            lambda qs: qs.filter(parent__isnull=False, user=user)
         )
         self.ordering = ("-created_at",)
-        # is_last_child = models.Window(
-        #     expression=models.functions.FirstValue("id"),
-        #     partition_by=models.F("origin"),
-        #     order_by=models.F("created_at").desc(),
-        # )
-        # self.override_get_queryset(
-        #     lambda qs: qs.annotate(last_child_id=is_last_child)
-        #     .filter(last_child_id=models.F("pk"))
-        #     .filter(parent__isnull=False, user=user)
-        # )
         return self.list(*args, **kwargs)
 
     @action(
