@@ -81,6 +81,7 @@ class PostSerializer(BaseModelSerializer[Post]):
             "origin",
             "replies_count",
             "depth",
+            "reply_row_number_desc",
         )
 
     parent = serializers.PrimaryKeyRelatedField(
@@ -104,6 +105,7 @@ class PostSerializer(BaseModelSerializer[Post]):
     replies_count = serializers.IntegerField(read_only=True)
     latest_date = serializers.DateTimeField(read_only=True)
     relavant_repost = serializers.SerializerMethodField()
+    reply_row_number_desc = serializers.IntegerField(read_only=True)
 
     def get_relavant_repost(self, obj: Post):
         if getattr(obj, "relavant_repost", None):
