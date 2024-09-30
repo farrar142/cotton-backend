@@ -1,7 +1,9 @@
+from typing import Literal
 from django.apps import apps
-
+from rest_framework.response import Response
 from commons import paginations
 from commons import permissions
+from commons.requests import Request
 from commons.viewsets import BaseViewset
 
 from images.models import Image
@@ -43,9 +45,8 @@ class PostViewSet(BaseViewset[Post, User]):
     queryset = Post.concrete_queryset()
     read_only_serializer = PostSerializer
     upsert_serializer = PostSerializer
-    pagination_class = paginations.CursorPagination
-    ordering = ("-latest_date", "-id")
-    ordering_fields = ("-latest_date", "-id")
+    pagination_class = paginations.TimelinePagination
+    offset_field = "latest_date"
     filterset_fields = ("user__username",)
     search_fields = ("text",)
 
@@ -80,7 +81,7 @@ class PostViewSet(BaseViewset[Post, User]):
         self.override_get_queryset(
             lambda qs: qs.filter(parent__isnull=False, user=user)
         )
-        self.ordering = ("-created_at",)
+        self.offset_field = "created_at"
         return self.list(*args, **kwargs)
 
     @action(
@@ -108,7 +109,7 @@ class PostViewSet(BaseViewset[Post, User]):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(lambda qs: qs.filter(favorites__user=user))
-        self.ordering = ("-favorites__created_at",)
+        self.offset_field = ("favorites__created_at",)
         return self.list(*args, **kwargs)
 
     @action(
@@ -132,5 +133,5 @@ class PostViewSet(BaseViewset[Post, User]):
         methods=["GET"], detail=False, url_path="timeline/global", permission_classes=[]
     )
     def get_global_timeline(self, *args, **kwargs):
-        self.ordering = ("-id",)
+        self.offset_field = "id"
         return self.list(*args, **kwargs)

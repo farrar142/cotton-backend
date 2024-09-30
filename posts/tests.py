@@ -24,6 +24,37 @@ from .serializers import (
 # 좋아요 눌렀을 시 알림을 생성해야됨.
 
 
+class TestPostPagination(TestCase):
+    def test_pagination(self):
+        Post.objects.all().delete()
+        posts = Post.objects.bulk_create(
+            [Post(text=str(i), user=self.user) for i in range(5)], batch_size=1
+        )
+        self.client.login(self.user)
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"][0]["id"], posts[-1].pk)
+        current_offset = resp.json()["current_offset"]
+        offset_field = resp.json()["offset_field"]
+        new_posts = Post.objects.bulk_create(
+            [Post(text=str(i), user=self.user) for i in range(3)], batch_size=1
+        )
+        resp = self.client.get(
+            f"/posts/timeline/{self.user.username}/",
+            dict(current_offset=current_offset),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"][0]["id"], posts[-1].pk)
+
+        resp = self.client.get(
+            f"/posts/timeline/{self.user.username}/",
+            dict(current_offset=current_offset, direction="prev"),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"].__len__(), 3)
+        self.assertEqual(resp.json()["results"][0]["id"], new_posts[-1].pk)
+
+
 class TestPosts(TestCase):
     user: User
 
@@ -46,7 +77,6 @@ class TestPosts(TestCase):
         ser.save()
         self.client.login(self.user)
         resp = self.client.get("/posts/timeline/")
-        print(resp.json())
         pass
 
     def test_timeline_reposts_upper(self):
@@ -111,7 +141,6 @@ class TestPosts(TestCase):
 
         resp = self.client.get(f"/posts/timeline/{self.user.username}/media/")
         self.assertEqual(resp.status_code, 200)
-        self.pprint(resp.json())
 
     def test_replies(self):
         builder = BlockTextBuilder().text(value="hello")
