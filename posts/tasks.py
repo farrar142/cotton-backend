@@ -9,5 +9,8 @@ def create_child_model(model_path: str, child_str: str, instance_id: int, user_i
     instance = Model.objects.filter(pk=instance_id).first()
     if not instance:
         return
+    manager = getattr(instance, child_str)
+    if manager.filter(user_id=user_id).exists():
+        return
 
     getattr(instance, child_str).create(user_id=user_id)
