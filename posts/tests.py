@@ -27,6 +27,9 @@ from .serializers import (
 class TestPostPagination(TestCase):
     def test_pagination(self):
         Post.objects.all().delete()
+        resp = self.client.get(f"/posts/timeline/{self.user.username}/")
+        self.assertEqual(resp.status_code, 200)
+        self.pprint(resp.json())
         posts = Post.objects.bulk_create(
             [Post(text=str(i), user=self.user) for i in range(5)], batch_size=1
         )
@@ -41,14 +44,14 @@ class TestPostPagination(TestCase):
         )
         resp = self.client.get(
             f"/posts/timeline/{self.user.username}/",
-            dict(current_offset=current_offset),
+            dict(offset=current_offset),
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["results"][0]["id"], posts[-1].pk)
 
         resp = self.client.get(
             f"/posts/timeline/{self.user.username}/",
-            dict(current_offset=current_offset, direction="prev"),
+            dict(offset=current_offset, direction="prev"),
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["results"].__len__(), 3)

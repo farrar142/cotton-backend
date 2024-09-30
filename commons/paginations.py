@@ -49,8 +49,8 @@ class TimelinePagination(BasePagination):
     offset_order: Literal["desc"] | Literal["asc"] = "desc"
     queryset: models.QuerySet
 
-    def get_current_offset(self, request: Request):
-        return request.query_params.get("current_offset")
+    def get_offset(self, request: Request):
+        return request.query_params.get("offset")
 
     def get_direction(self, request: Request):
         direction = request.query_params.get("direction", "next")
@@ -69,17 +69,18 @@ class TimelinePagination(BasePagination):
         return ""
 
     def paginate_queryset(self, queryset, request, view=None):
-        self._currentOffset = self.get_current_offset(request)
+        self._offset = self.get_offset(request)
         self._direction = self.get_direction(request)
         self._offset_field = self.get_offset_field(request, view)
         self._offset_order = self.get_offset_order(request, view)
-        query_params = {f"{self._offset_field}{self._direction}": self._currentOffset}
-        if not self._currentOffset:
+        query_params = {f"{self._offset_field}{self._direction}": self._offset}
+        if not self._offset:
             query_params = {}
         self.queryset = queryset.filter(**query_params).order_by(
             f"{self._offset_order}{self._offset_field}", f"{self._offset_order}id"
         )
         self.sliced_queryset = self.queryset[0:10]
+        self.next_queryset = self.queryset[10:11]
         return self.sliced_queryset
 
     def get_response_current_offset(self, data):
@@ -90,17 +91,17 @@ class TimelinePagination(BasePagination):
         return data[0].get(self._offset_field, None)
 
     def get_has_next(self):
-        if self.queryset.count() <= self.sliced_queryset.count():
-            return False
-        return True
+        return bool(self.next_queryset[0])
 
     def get_paginated_response(self, data):
+        next_offset = None
+        if 1 <= self.next_queryset.count():
+            next_offset = getattr(self.next_queryset[0], self._offset_field, None)
         return Response(
             {
-                "has_prev": None,
-                "has_next": self.get_has_next(),
                 "results": data,
                 "current_offset": self.get_response_current_offset(data),
                 "offset_field": self._offset_field,
+                "next_offset": next_offset,
             }
         )
