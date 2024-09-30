@@ -47,6 +47,7 @@ class PostViewSet(BaseViewset[Post, User]):
     ordering = ("-latest_date", "-id")
     ordering_fields = ("-latest_date", "-id")
     filterset_fields = ("user__username",)
+    search_fields = ("text",)
 
     action = BaseViewset.action
 

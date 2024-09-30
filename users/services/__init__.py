@@ -20,8 +20,8 @@ class SigninSerializer(serializers.Serializer):
 
 
 class SignupSerializer(SigninSerializer):
-    nickname = serializers.CharField(min_length=2, max_length=256, required=False)
-    username = serializers.CharField(min_length=2, max_length=256)
+    nickname = serializers.CharField(min_length=2, max_length=64, required=False)
+    username = serializers.CharField(min_length=2, max_length=64)
     password2 = serializers.CharField()
 
 

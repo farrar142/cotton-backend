@@ -52,9 +52,14 @@ class UserUpsertSerializer(BaseModelSerializer[User]):
         model = User
         fields = ("id", "bio", "profile_image", "header_image", "nickname", "username")
 
-    bio = serializers.CharField(max_length=511, required=False)
-    header_image = ImageSerializer(required=False)
-    profile_image = ImageSerializer(required=False)
+    username = serializers.CharField(
+        max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    bio = serializers.CharField(
+        max_length=511, required=False, allow_null=True, allow_blank=True
+    )
+    header_image = ImageSerializer(required=False, allow_null=True)
+    profile_image = ImageSerializer(required=False, allow_null=True)
 
     def create(self, validated_data):
         raise exceptions.MethodNotAllowed("post")
@@ -69,7 +74,7 @@ class UserUpsertSerializer(BaseModelSerializer[User]):
         return instance
 
     def create_image(self, instance: User, key: str):
-        image = getattr(self.initial_data, key, None)
+        image = self.initial_data.get(key)
         if not image:
             return
         serializer = ImageSerializer(data=image)
