@@ -209,6 +209,8 @@ class TestPosts(TestCase):
 
         resp = self.client.get(f"/posts/{post2_id}/")
         self.assertEqual(resp.json()["replies_count"], 1)
+        resp = self.client.get(f"/posts/{post_id}/replies/")
+        self.assertEqual(resp.status_code, 200)
 
 
 class TestPostsBase(TestCase):

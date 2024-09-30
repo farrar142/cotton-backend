@@ -135,3 +135,10 @@ class PostViewSet(BaseViewset[Post, User]):
     def get_global_timeline(self, *args, **kwargs):
         self.offset_field = "id"
         return self.list(*args, **kwargs)
+
+    @action(methods=["GET"], detail=True, url_path="replies")
+    def get_replies(self, *args, **kwargs):
+        instance = self.get_object()
+        self.override_get_queryset(lambda qs: qs.filter(parent=instance))
+        self.offset_field = "created_at"
+        return self.list(*args, **kwargs)
