@@ -109,7 +109,7 @@ class PostViewSet(BaseViewset[Post, User]):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
         self.override_get_queryset(lambda qs: qs.filter(favorites__user=user))
-        self.offset_field = ("favorites__created_at",)
+        self.offset_field = "favorites__created_at"
         return self.list(*args, **kwargs)
 
     @action(
