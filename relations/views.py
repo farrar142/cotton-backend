@@ -19,13 +19,35 @@ class FollowViewset(BaseViewset[User, User]):
     @action(methods=["GET"], detail=False, url_path="followings")
     def get_followings(self, *args, **kwargs):
         service = FollowService(self.request.user)
-        self.override_get_queryset(lambda x: service.get_followings())
+        self.override_get_queryset(
+            lambda x: service.get_users_followings(self.request.user)
+        )
+        self.ordering = ("-following_created_at",)
+        return self.list(*args, **kwargs)
+
+    @action(methods=["GET"], detail=True, url_path="followings")
+    def get_user_followings(self, *args, **kwargs):
+        target_user = self.get_object()
+        service = FollowService(self.request.user)
+        self.override_get_queryset(lambda x: service.get_users_followings(target_user))
+        self.ordering = ("-following_created_at",)
         return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=False, url_path="followers")
     def get_followers(self, *args, **kwargs):
         service = FollowService(self.request.user)
-        self.override_get_queryset(lambda x: service.get_followers())
+        self.override_get_queryset(
+            lambda x: service.get_users_followers(self.request.user)
+        )
+        self.ordering = ("-followed_by_created_at",)
+        return self.list(*args, **kwargs)
+
+    @action(methods=["GET"], detail=True, url_path="followers")
+    def get_user_followers(self, *args, **kwargs):
+        service = FollowService(self.request.user)
+        target_user = self.get_object()
+        self.override_get_queryset(lambda x: service.get_users_followers(target_user))
+        self.ordering = ("-followed_by_created_at",)
         return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=False, url_path="mutual_followings")

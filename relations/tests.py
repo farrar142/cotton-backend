@@ -19,6 +19,37 @@ class TestRelation(TestCase):
     user2: User
     user3: User
 
+    def test_follower_get_list_order(self):
+        service = FollowService(self.user2)
+        service.follow(self.user3)
+        service = FollowService(self.user)
+        service.follow(self.user3)
+        service.follow(self.user2)
+        self.client.login(self.user)
+        resp = self.client.get(f"/relations/{self.user.pk}/followings/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        self.assertEqual(resp.json()["results"][0]["id"], self.user2.pk)
+        self.assertEqual(resp.json()["results"][1]["id"], self.user3.pk)
+
+        self.client.login(self.user3)
+        resp = self.client.get(f"/relations/{self.user.pk}/followings/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        self.assertEqual(resp.json()["results"][0]["id"], self.user2.pk)
+        self.assertEqual(resp.json()["results"][0]["is_followed_by"], True)
+        self.assertEqual(resp.json()["results"][1]["id"], self.user3.pk)
+
+        resp = self.client.get(f"/relations/{self.user3.pk}/followers/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        self.assertEqual(resp.json()["results"][0]["id"], self.user.pk)
+        self.assertEqual(resp.json()["results"][0]["is_followed_by"], True)
+        self.assertEqual(resp.json()["results"][1]["id"], self.user2.pk)
+        self.assertEqual(resp.json()["results"][1]["is_followed_by"], True)
+
+        resp = self.client.get(f"/relations/{self.user3.pk}/followings/")
+
     def test_is_mutual_following_checkable(self):
         service = FollowService(self.user)
         service.follow(self.user2)
@@ -54,7 +85,7 @@ class TestRelation(TestCase):
         self.client.login(self.user3)
         resp = self.client.get("/users/me/")
         self.assertEqual(resp.json()["followers_count"], 2)
-        print(s3.get_followers())
+        print(s3.get_users_followers(self.user3))
 
     def test_viewsets(self):
         self.client.login(self.user)

@@ -61,6 +61,9 @@ class User(UserAbstract):
     is_followed_by = make_property_field(False)
     is_mutual_follow = make_property_field(False)
 
+    following_at = make_property_field(None)
+    followed_by_at = make_property_field(None)
+
     @classmethod
     def get_following_model(cls) -> "Follow":
         from pprint import pprint as pp
@@ -82,6 +85,8 @@ class User(UserAbstract):
                 is_following_to=cls.get_is_following_to(user=user),
                 is_followed_by=cls.get_is_followed_by(user=user),
                 is_mutual_follow=cls.get_is_mutual_follow(),
+                following_at=cls.get_following_at(user=user),
+                followed_by_at=cls.get_followed_by_at(user=user),
             )
         )
 
@@ -101,10 +106,33 @@ class User(UserAbstract):
         Follow = cls.get_following_model()
         return models.Subquery(
             Follow.objects.filter(followed_by=models.OuterRef("pk"))
-            .values("following_to")
-            .order_by("following_to")
+            .values("followed_by")
+            .order_by("followed_by")
             .annotate(count=models.Count("pk"))
             .values("count")
+        )
+
+    @classmethod
+    def get_following_at(cls, user: AbstractBaseUser | None):
+        Follow = cls.get_following_model()
+        if not user:
+            return models.Value(None)
+        return models.Subquery(
+            Follow.objects.filter(
+                following_to=models.OuterRef("pk"), followed_by=user
+            ).values("created_at")
+        )
+
+    @classmethod
+    def get_followed_by_at(cls, user: AbstractBaseUser | None):
+        Follow = cls.get_following_model()
+        if not user:
+            return models.Value(None)
+        return models.Subquery(
+            Follow.objects.filter(
+                followed_by=models.OuterRef("pk"),
+                following_to=user,
+            ).values("created_at")
         )
 
     @classmethod

@@ -33,6 +33,8 @@ class UserSerializer(UserBaseSerializer):
             "followings_count",
             "is_following_to",
             "is_followed_by",
+            "following_at",
+            "followed_by_at",
             "is_mutual_follow",
             "is_registered",
             "registerd_at",
@@ -45,6 +47,8 @@ class UserSerializer(UserBaseSerializer):
     followings_count = serializers.IntegerField(required=False)
     is_following_to = serializers.BooleanField(required=False)
     is_followed_by = serializers.BooleanField(required=False)
+    following_at = serializers.DateTimeField(required=False)
+    followed_by_at = serializers.DateTimeField(required=False)
     is_mutual_follow = serializers.BooleanField(required=False)
     name = serializers.SerializerMethodField()
 
