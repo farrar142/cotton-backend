@@ -14,6 +14,9 @@ class Post(CommonModel):
     parent = models.ForeignKey(
         "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
     )
+    quote = models.ForeignKey(
+        "Post", on_delete=models.DO_NOTHING, related_name="quotes", null=True
+    )
     depth = models.IntegerField(default=0)
     text = models.TextField(max_length=1024)
     blocks = models.JSONField(default=list)
@@ -30,10 +33,13 @@ class Post(CommonModel):
     )  # origin에 대한 자신의 게시글을 마지막에 작성한 순서대로 나열한 값. reply확인에 사용
     favorites_count = make_property_field(0)
     views_count = make_property_field(0)
+    quotes_count = make_property_field(0)
     replies_count = make_property_field(0)
+    reposts_count = make_property_field(0)
     has_views = make_property_field(False)
     has_favorite = make_property_field(False)
     has_bookmark = make_property_field(False)
+    has_quote = make_property_field(False)
     has_repost = make_property_field(False)
     relavant_repost: "list[Repost]|None"  # prefetch의 to_attr은 getter setter를 통하여 할당이 불가능해 보임
 
@@ -61,10 +67,12 @@ class Post(CommonModel):
                 favorites_count=cls.get_favorites_count(),
                 replies_count=cls.get_replies_count(),
                 reposts_count=cls.get_reposts_count(),
+                quotes_count=cls.get_quotes_count(),
                 has_view=cls.get_has_view(user),
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
                 has_repost=cls.get_has_repost(user),
+                has_quote=cls.get_has_quote(user),
                 reply_row_number_desc=cls.get_reply_row_number_desc(),
             )
         )
@@ -149,6 +157,16 @@ class Post(CommonModel):
         )
 
     @classmethod
+    def get_quotes_count(cls):
+        return models.Subquery(
+            Post.objects.filter(quote=models.OuterRef("pk"))
+            .order_by("quote")
+            .values("quote")
+            .annotate(count=models.Count("pk"))
+            .values("count")
+        )
+
+    @classmethod
     def get_has_favorite(cls, user: AbstractBaseUser | None = None):
         if user == None:
             return models.Value(False)
@@ -156,7 +174,6 @@ class Post(CommonModel):
             Favorite.objects.filter(user=user, post_id=models.OuterRef("pk"))
         )
 
-    @classmethod
     @classmethod
     def get_has_bookmark(cls, user: AbstractBaseUser | None):
         if user == None:
@@ -171,6 +188,14 @@ class Post(CommonModel):
             return models.Value(False)
         return models.Exists(
             Repost.objects.filter(user=user, post_id=models.OuterRef("pk"))
+        )
+
+    @classmethod
+    def get_has_quote(cls, user: AbstractBaseUser | None):
+        if user == None:
+            return models.Value(False)
+        return models.Exists(
+            Post.objects.filter(quote=models.OuterRef("pk"), user=user)
         )
 
     @classmethod

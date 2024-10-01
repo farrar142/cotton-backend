@@ -71,15 +71,18 @@ class PostSerializer(BaseModelSerializer[Post]):
             "has_bookmark",
             "has_repost",
             "has_favorite",
+            "has_quote",
             "views_count",
             "favorites_count",
             "reposts_count",
+            "quotes_count",
             "mentions",
             "relavant_repost",
             "latest_date",
             "images",
             "parent",
             "origin",
+            "quote",
             "replies_count",
             "depth",
             "reply_row_number_desc",
@@ -89,6 +92,9 @@ class PostSerializer(BaseModelSerializer[Post]):
         queryset=Post.objects.all(), required=False
     )
     origin = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(), required=False
+    )
+    quote = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(), required=False
     )
     blocks = serializers.ListField(
@@ -101,10 +107,12 @@ class PostSerializer(BaseModelSerializer[Post]):
     has_favorite = serializers.BooleanField(read_only=True)
     has_bookmark = serializers.BooleanField(read_only=True)
     has_repost = serializers.BooleanField(read_only=True)
+    has_quote = serializers.BooleanField(read_only=True)
     favorites_count = serializers.IntegerField(read_only=True)
     views_count = serializers.IntegerField(read_only=True)
     replies_count = serializers.IntegerField(read_only=True)
     reposts_count = serializers.IntegerField(read_only=True)
+    quotes_count = serializers.IntegerField(read_only=True)
     latest_date = serializers.DateTimeField(read_only=True)
     relavant_repost = serializers.SerializerMethodField()
     reply_row_number_desc = serializers.IntegerField(read_only=True)

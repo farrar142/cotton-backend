@@ -212,6 +212,36 @@ class TestPosts(TestCase):
         resp = self.client.get(f"/posts/{post_id}/replies/")
         self.assertEqual(resp.status_code, 200)
 
+    def test_quote(self):
+        builder = BlockTextBuilder().text(value="hello")
+        self.client.login(self.user)
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user.pk)],
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        post_id = resp.json()["id"]
+
+        resp = self.client.post(
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user.pk)],
+                quote=post_id,
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json().get("quote"), post_id)
+
+        resp = self.client.get(f"/posts/{post_id}/")
+        self.assertEqual(resp.json().get("quotes_count"), 1)
+        self.assertEqual(resp.json().get("has_quote"), True)
+
 
 class TestPostsBase(TestCase):
     def setUp(self):
