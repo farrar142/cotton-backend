@@ -36,6 +36,7 @@ class UserSerializer(UserBaseSerializer):
             "is_mutual_follow",
             "is_registered",
             "registerd_at",
+            "name",
         )
         read_only_fields = ("registered_at",)
 
@@ -45,6 +46,10 @@ class UserSerializer(UserBaseSerializer):
     is_following_to = serializers.BooleanField(required=False)
     is_followed_by = serializers.BooleanField(required=False)
     is_mutual_follow = serializers.BooleanField(required=False)
+    name = serializers.SerializerMethodField()
+
+    def get_name(self, obj: User):
+        return obj.username
 
 
 class UserUpsertSerializer(BaseModelSerializer[User]):
