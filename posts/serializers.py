@@ -73,6 +73,7 @@ class PostSerializer(BaseModelSerializer[Post]):
             "has_favorite",
             "views_count",
             "favorites_count",
+            "reposts_count",
             "mentions",
             "relavant_repost",
             "latest_date",
@@ -103,6 +104,7 @@ class PostSerializer(BaseModelSerializer[Post]):
     favorites_count = serializers.IntegerField(read_only=True)
     views_count = serializers.IntegerField(read_only=True)
     replies_count = serializers.IntegerField(read_only=True)
+    reposts_count = serializers.IntegerField(read_only=True)
     latest_date = serializers.DateTimeField(read_only=True)
     relavant_repost = serializers.SerializerMethodField()
     reply_row_number_desc = serializers.IntegerField(read_only=True)

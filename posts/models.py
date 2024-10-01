@@ -60,6 +60,7 @@ class Post(CommonModel):
                 views_count=cls.get_views_count(),
                 favorites_count=cls.get_favorites_count(),
                 replies_count=cls.get_replies_count(),
+                reposts_count=cls.get_reposts_count(),
                 has_view=cls.get_has_view(user),
                 has_favorite=cls.get_has_favorite(user),
                 has_bookmark=cls.get_has_bookmark(user),
@@ -138,6 +139,16 @@ class Post(CommonModel):
         return models.Count("replies")
 
     @classmethod
+    def get_reposts_count(cls):
+        return models.Subquery(
+            Repost.objects.filter(post=models.OuterRef("pk"))
+            .order_by("post")
+            .values("post")
+            .annotate(count=models.Count("pk"))
+            .values("count")
+        )
+
+    @classmethod
     def get_has_favorite(cls, user: AbstractBaseUser | None = None):
         if user == None:
             return models.Value(False)
@@ -145,6 +156,7 @@ class Post(CommonModel):
             Favorite.objects.filter(user=user, post_id=models.OuterRef("pk"))
         )
 
+    @classmethod
     @classmethod
     def get_has_bookmark(cls, user: AbstractBaseUser | None):
         if user == None:
