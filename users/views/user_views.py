@@ -17,7 +17,7 @@ class UserViewSet(BaseViewset[User, User]):
     read_only_serializer = UserSerializer
     upsert_serializer = UserUpsertSerializer
 
-    search_fields = ("nickname", "username", "id")
+    search_fields = ("nickname", "username")
 
     def create(self, *args, **kwargs):
         raise self.exceptions.PermissionDenied
