@@ -151,5 +151,5 @@ class Notification(
         return (
             super()
             .concrete_queryset(user, *args, **kwargs)
-            .select_related("favorited_post", "reposted_post")
+            .select_related("favorited_post", "reposted_post", "mentioned_post")
         )

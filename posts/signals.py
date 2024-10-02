@@ -29,7 +29,7 @@ def on_repost_created(sender, instance: Repost, **kwargs):
     from notifications.models import Notification
 
     noti = Notification()
-    noti.user = instance.post.user.pk
+    noti.user = instance.post.user
     noti.from_user = instance.user
     noti.reposted_post = instance
     noti.save()
