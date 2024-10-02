@@ -84,7 +84,7 @@ class RepliedNotification(NotificationBase):
 
     replied_post = models.ForeignKey(
         Post,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="replied_notifications",
         null=True,
     )
@@ -101,7 +101,7 @@ class QuotedNotification(NotificationBase):
 
     quoted_post = models.ForeignKey(
         Post,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="quoted_notifications",
         null=True,
     )
@@ -118,7 +118,7 @@ class FollowedNotification(NotificationBase):
 
     followed_user = models.ForeignKey(
         Follow,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="followed_notifications",
         null=True,
     )
