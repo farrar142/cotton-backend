@@ -13,3 +13,9 @@ AI?
 5. Repost기능
     1. 팔로우한 사람이 Repost한 글들을 최신순으로, 팔로우한 사람이 작성한 글을 최신순으로
 6. Notification기능
+    4. mention
+    1. favorite
+    2. repost
+    6. replied
+    3. quote
+    5. follow

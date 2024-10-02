@@ -64,11 +64,11 @@ class TestCase(TC):
 
     def setUp(self):
         User = get_user_model()
-        user = User(username="test", email="test@gmail.com")
+        user = User(username="test", email="test@gmail.com", nickname="test")
         user.set_password("1234567890")
-        user2 = User(username="test2", email="test2@gmail.com")
+        user2 = User(username="test2", email="test2@gmail.com", nickname="test2")
         user2.set_password("1234567890")
-        user3 = User(username="test3", email="test3@gmail.com")
+        user3 = User(username="test3", email="test3@gmail.com", nickname="test3")
         user3.set_password("1234567890")
         users = User.objects.bulk_create([user, user2, user3])
         self.user = users[0]

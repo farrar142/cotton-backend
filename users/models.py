@@ -116,23 +116,29 @@ class User(UserAbstract):
     def get_following_at(cls, user: AbstractBaseUser | None):
         Follow = cls.get_following_model()
         if not user:
-            return models.Value(None)
-        return models.Subquery(
-            Follow.objects.filter(
-                following_to=models.OuterRef("pk"), followed_by=user
-            ).values("created_at")
+            return models.ExpressionWrapper(models.Value(None), models.DateTimeField())
+        return models.ExpressionWrapper(
+            models.Subquery(
+                Follow.objects.filter(
+                    following_to=models.OuterRef("pk"), followed_by=user
+                ).values("created_at"),
+            ),
+            output_field=models.DateTimeField(),
         )
 
     @classmethod
     def get_followed_by_at(cls, user: AbstractBaseUser | None):
         Follow = cls.get_following_model()
         if not user:
-            return models.Value(None)
-        return models.Subquery(
-            Follow.objects.filter(
-                followed_by=models.OuterRef("pk"),
-                following_to=user,
-            ).values("created_at")
+            return models.ExpressionWrapper(models.Value(None), models.DateTimeField())
+        return models.ExpressionWrapper(
+            models.Subquery(
+                Follow.objects.filter(
+                    followed_by=models.OuterRef("pk"),
+                    following_to=user,
+                ).values("created_at"),
+            ),
+            output_field=models.DateTimeField(),
         )
 
     @classmethod

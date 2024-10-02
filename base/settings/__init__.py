@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "posts",
     "relations",
     "images",
+    "notifications",
 ]
 
 MIDDLEWARE = [

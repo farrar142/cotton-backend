@@ -23,4 +23,5 @@ urlpatterns = [
     path("", include("users.urls")),
     path("", include("posts.urls")),
     path("", include("relations.urls")),
+    path("", include("notifications.urls")),
 ]
