@@ -6,4 +6,10 @@ from .models import Follow
 
 @receiver(post_save, sender=Follow)
 def on_following_created(sender, instance: Follow, **kwargs):
-    pass
+    from notifications.models import Notification
+
+    noti = Notification()
+    noti.user = instance.following_to
+    noti.from_user = instance.followed_by
+    noti.followed_user = instance
+    noti.save()

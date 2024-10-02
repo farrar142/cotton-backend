@@ -1,3 +1,4 @@
+from typing import Self
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 
@@ -11,10 +12,10 @@ class Post(CommonModel):
     origin = models.ForeignKey(
         "Post", on_delete=models.DO_NOTHING, related_name="childrens", null=True
     )
-    parent = models.ForeignKey(
+    parent: "models.ForeignKey[Self]" = models.ForeignKey(  # type:ignore
         "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
     )
-    quote = models.ForeignKey(
+    quote: "models.ForeignKey[Self]" = models.ForeignKey(  # type:ignore
         "Post", on_delete=models.DO_NOTHING, related_name="quotes", null=True
     )
     depth = models.IntegerField(default=0)

@@ -13,24 +13,24 @@ class TestNotification(TestCase):
         )
         self.client.login(self.user)
         resp = self.client.post(
-            "/posts/", dict(text=builder.get_plain_text(), blocks=builder.get_json())
+            "/posts/",
+            dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+                mentions=[dict(mentioned_to=self.user2.pk)],
+            ),
         )
         self.assertEqual(resp.status_code, 201)
         post_id = resp.json()["id"]
-        noti = Notification(
-            mentioned_post_id=post_id, user=self.user, from_user=self.user
-        )
-        noti.save()
-        favorite = Favorite.objects.create(post_id=post_id, user=self.user2)
-        noti2 = Notification(
-            favorited_post=favorite, user=self.user, from_user=self.user2
-        )
-        noti2.save()
-
+        Favorite.objects.create(post_id=post_id, user=self.user2)
         self.client.login(self.user)
-        resp = self.client.post(f"/notifications/{noti2.pk}/check/")
-        self.assertEqual(resp.status_code, 201)
 
+        resp = self.client.get("/notifications/")
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        self.pprint(resp.json())
+        noti2_id = resp.json()["results"][0]["id"]
+        resp = self.client.post(f"/notifications/{noti2_id}/check/")
+        self.assertEqual(resp.status_code, 201)
         resp = self.client.get("/notifications/")
         self.assertEqual(resp.json()["results"].__len__(), 2)
         self.assertEqual(resp.json()["results"][0]["is_checked"], True)

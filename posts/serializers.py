@@ -10,9 +10,12 @@ from .models import Post, Favorite, Bookmark, Repost, Mention, View, models
 class MentionSerializer(BaseModelSerializer[Mention]):
     class Meta:
         model = Mention
-        fields = ("id", "mentioned_to")
+        fields = ("id", "mentioned_to", "post")
 
     mentioned_to = UserSerializer(queryset=User.objects.all())
+    post = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(), required=False
+    )
 
 
 class PlainTextTypeChoices(models.TextChoices):
@@ -132,13 +135,13 @@ class PostSerializer(BaseModelSerializer[Post]):
         if parent:
             validated_data["depth"] = parent.depth + 1
         instance: Post = super().create(validated_data)
-        if instance:
-            instance.mentions.bulk_create(
-                [
-                    Mention(mentioned_to=mention["mentioned_to"], post=instance)
-                    for mention in mentions
-                ]
-            )
+        if mentions:
+            from .tasks import create_mentions_in_background
+
+            for mention in mentions:
+                create_mentions_in_background.delay(
+                    mentioned_to_id=mention["mentioned_to"].pk, post_id=instance.pk
+                )
         if images:
             ser = ImageSerializer(
                 data=self.initial_data["images"], many=True  # type:ignore

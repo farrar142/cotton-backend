@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from commons.models import CommonModel
 
-from posts.models import Post, Repost, Favorite
+from posts.models import Post, Repost, Favorite, Mention
 from users.models import User
 from relations.models import Follow
 
@@ -21,6 +21,10 @@ class NotificationBase(models.Model):
     def _text(self) -> str:
         return ""
 
+    @property
+    def text(self):
+        return self._text()
+
 
 # Create your models here.
 class MentionedNotification(NotificationBase):
@@ -28,7 +32,7 @@ class MentionedNotification(NotificationBase):
         abstract = True
 
     mentioned_post = models.ForeignKey(
-        Post,
+        Mention,
         on_delete=models.CASCADE,
         related_name="mentioned_notifications",
         null=True,
