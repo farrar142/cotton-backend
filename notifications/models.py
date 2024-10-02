@@ -109,7 +109,7 @@ class QuotedNotification(NotificationBase):
     def _text(self):
         if not self.quoted_post:
             return super()._text()
-        return "{{nickname}}님이 회원님을 언급했습니다."
+        return "{{nickname}}님이 회원님의 게시글을 인용했습니다."
 
 
 class FollowedNotification(NotificationBase):

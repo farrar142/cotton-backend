@@ -51,7 +51,7 @@ def on_mention_created(sender, instance: Mention, **kwargs):
     from notifications.models import Notification
 
     noti = Notification()
-    noti.user = instance.post.user
+    noti.user = instance.mentioned_to
     noti.from_user = instance.post.user
     noti.mentioned_post = instance
     noti.save()
