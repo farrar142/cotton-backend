@@ -1,5 +1,5 @@
 services:
-  server: &server
+  server:
     build: .
     container_name: bsky-backend
     # command: sh dev.sh runserver 0.0.0.0:8000
@@ -20,16 +20,25 @@ services:
     restart: on-failure
 
   deploy:
-    <<: *server
+    build: .
     container_name: cotton-backend
     ports:
      - ${PORT:-8000}:8000
-    volumes:
-      - .:/none
     entrypoint: sh run.sh
+    env_file:
+      - ./.env
     healthcheck:
         test: ['CMD','curl','http://localhost:${PORT:-8000}/']
         interval: 10s
         timeout: 5s
         retries: 2
         start_period: 5s
+    restart: on-failure
+
+  celery:
+    build: .
+    container_name: cotton-celery
+    entrypoint: sh celery.sh
+    env_file:
+      - ./.env
+    restart: on-failure
