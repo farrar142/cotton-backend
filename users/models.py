@@ -6,10 +6,6 @@ from django.db import models
 from commons.model_utils import make_property_field
 from images.models import Image
 
-if TYPE_CHECKING:
-    from relations.models import Follow
-models.ManyToManyField
-
 
 class UserAbstract(AbstractBaseUser, PermissionsMixin):
     class Meta:
@@ -36,6 +32,11 @@ class UserAbstract(AbstractBaseUser, PermissionsMixin):
         return cls.objects.all()
 
 
+if TYPE_CHECKING:
+    from relations.models import Follow
+    from chats.models import MessageGroup, MessageAttendant
+
+
 class User(UserAbstract):
     is_registered = models.BooleanField(default=False)
     registered_at = models.DateTimeField(null=True)
@@ -53,6 +54,8 @@ class User(UserAbstract):
         through_fields=("followed_by", "following_to"),
     )
     followers: models.Manager["User"]
+    message_groups: "models.Manager[MessageGroup]"
+    message_attendants: "models.Manager[MessageAttendant]"
 
     followings_count = make_property_field(False)
     followers_count = make_property_field(False)

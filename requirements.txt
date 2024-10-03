@@ -1,5 +1,6 @@
 boto3==1.34.149
-channels
+# channels
+channels["daphne"]
 channels_redis==4.2.0
 celery==5.4.0
 django-cors-headers==4.4.0
