@@ -1,5 +1,6 @@
 from uuid import uuid4
 from django.db import transaction, models
+from rest_framework import exceptions
 
 from commons.lock import with_lock
 
@@ -11,7 +12,12 @@ class MessageService:
     @classmethod
     @transaction.atomic
     def create(cls, *users: User, is_direct_message: bool = True):
-        key = "message-create=" + ":".join(sorted(map(str, map(lambda u: u.pk, users))))
+        pk_flattened = map(lambda u: u.pk, users)
+        if len(set(pk_flattened)) == 1:
+            raise exceptions.ValidationError(
+                detail=dict(user=["자신에게 대화를 보낼 수 없습니다."])
+            )
+        key = "message-create=" + ":".join(sorted(map(str, pk_flattened)))
         with with_lock(key):
             if is_direct_message:
                 if group := cls.get_direct_message_group(*users):
