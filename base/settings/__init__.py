@@ -174,7 +174,8 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_ACCEPT_CONTENT = ["pickle", "json"]
 CELERY_TASK_SERIALIZER = "pickle"
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+\.honeycombpizza\.link$"]
 
 # S3
 
