@@ -1,5 +1,5 @@
 services:
-  server:
+  server: &server
     build: .
     container_name: bsky-backend
     # command: sh dev.sh runserver 0.0.0.0:8000
@@ -18,12 +18,15 @@ services:
         retries: 2
         start_period: 5s
     restart: on-failure
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-        limits:
-          memory: 6G
+
+  deploy:
+    <<: *server
+    ports:
+     - ${port:-8000}:8000
+    entrypoint: sh run.sh
+    healthcheck:
+        test: ['CMD','curl','http://localhost:${port:-8000}/']
+        interval: 10s
+        timeout: 5s
+        retries: 2
+        start_period: 5s

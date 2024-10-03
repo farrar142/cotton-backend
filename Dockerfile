@@ -40,3 +40,5 @@ RUN apt-get install -y libglib2.0-0
 # Expose the port that the application listens on.
 EXPOSE 8000
 
+COPY . .
+
