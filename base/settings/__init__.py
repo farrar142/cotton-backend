@@ -130,7 +130,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("host.docker.internal", 6379)],
+            "hosts": [(getenv("CHANNEL_LAYER_HOST"), 6379)],
         },
     },
 }
