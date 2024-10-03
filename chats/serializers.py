@@ -10,6 +10,7 @@ class MessageGroupSerializer(BaseModelSerializer[MessageGroup]):
             "id",
             "is_direct_message",
             "attendants",
+            "created_at",
             "latest_message",
             "latest_message_user",
             "latest_message_created_at",
