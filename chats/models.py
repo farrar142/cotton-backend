@@ -22,6 +22,7 @@ class MessageGroup(models.Model):
         ).annotate(
             latest_message=cls.get_latest_message(),
             latest_message_user=cls.get_latest_message_user(),
+            latest_message_nickname=cls.get_latest_message_nickname(),
             latest_message_created_at=cls.get_latest_message_created_at(),
         )
 
@@ -54,6 +55,17 @@ class MessageGroup(models.Model):
             .order_by("-created_at")
             .values(
                 "created_at",
+            )[:1]
+        )
+
+    @classmethod
+    def get_latest_message_nickname(cls):
+        return models.Subquery(
+            Message.objects.filter(group=models.OuterRef("pk"))
+            .annotate(nickname=models.F("attendant__user__nickname"))
+            .order_by("-created_at")
+            .values(
+                "nickname",
             )[:1]
         )
 

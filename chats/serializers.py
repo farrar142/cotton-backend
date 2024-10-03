@@ -13,11 +13,13 @@ class MessageGroupSerializer(BaseModelSerializer[MessageGroup]):
             "created_at",
             "latest_message",
             "latest_message_user",
+            "latest_message_nickname",
             "latest_message_created_at",
         )
 
     attendants = UserSerializer(many=True)
     latest_message = serializers.CharField(required=False)
+    latest_message_nickname = serializers.CharField(required=False)
     latest_message_user = serializers.IntegerField(required=False)
     latest_message_created_at = serializers.DateTimeField(required=False)
 
