@@ -35,7 +35,7 @@ RUN apt-get -y install git
 #     python -m pip install -r requirements.txt
 COPY ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
-RUN pip install -U channels["daphne"] 
+RUN pip install  channels["daphne"] 
 RUN apt-get install -y libgl1-mesa-glx
 RUN apt-get install -y libglib2.0-0
 # Switch to the non-privileged user to run the application.
