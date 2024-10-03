@@ -4,6 +4,7 @@ from django.db import transaction, models
 from commons.lock import with_lock
 
 from .models import User, MessageGroup, MessageAttendant, Message, models
+from .tasks import send_message_to_ws
 
 
 class MessageService:
@@ -49,9 +50,11 @@ class MessageService:
         if identifier == None:
             identifier = str(uuid4())
         attendant = MessageAttendant.objects.get(group=self.group, user=user)
-        return attendant.messages.create(
+        instance = attendant.messages.create(
             group=self.group, message=message, identifier=identifier
         )
+        send_message_to_ws.delay(instance.pk)
+        return instance
 
     def get_messages(self):
         return self.group.messages.annotate(user=models.F("attendant__user")).all()

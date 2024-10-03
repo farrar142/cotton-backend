@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from asgiref.sync import async_to_sync
 
 
 from channels.layers import get_channel_layer
@@ -24,3 +25,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         if self.channel_layer:
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def emit_message(self, event):
+        message = event["message"]
+        await self.send(text_data=json.dumps(message))
+
+    @classmethod
+    def send_message(cls, group_id: int | str, message: dict):
+        layer = get_channel_layer()
+        if not layer:
+            return
+        async_to_sync(layer.group_send)(
+            cls.get_group_name(group_id),
+            dict(type="emit_message", message=message),
+        )

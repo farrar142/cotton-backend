@@ -80,6 +80,7 @@ class Message(models.Model):
     group = models.ForeignKey(
         MessageGroup, on_delete=models.CASCADE, related_name="messages"
     )
+    group_id: int
     attendant = models.ForeignKey(
         MessageAttendant, on_delete=models.CASCADE, related_name="messages"
     )
