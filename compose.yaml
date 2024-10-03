@@ -24,8 +24,6 @@ services:
     container_name: cotton-backend
     ports:
      - ${PORT:-8000}:8000
-    volumes:
-      - .:/app
     entrypoint: sh run.sh
     env_file:
       - ./.env
