@@ -18,7 +18,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-USER root
+# USER root
 
 
 RUN apt-get update && apt-get -y install libpq-dev gcc
@@ -34,8 +34,8 @@ RUN apt-get -y install git
 #     --mount=type=bind,source=requirements.txt,target=requirements.txt \
 #     python -m pip install -r requirements.txt
 COPY ./requirements.txt ./requirements.txt
-RUN python - m pip install -r requirements.txt
-RUN python - m pip install -U channels["daphne"] 
+RUN pip install -r requirements.txt
+RUN pip install -U channels["daphne"] 
 RUN apt-get install -y libgl1-mesa-glx
 RUN apt-get install -y libglib2.0-0
 # Switch to the non-privileged user to run the application.
