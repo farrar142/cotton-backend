@@ -21,6 +21,7 @@ services:
 
   deploy:
     <<: *server
+    container_name: cotton-backend
     ports:
      - ${port:-8000}:8000
     entrypoint: sh run.sh
