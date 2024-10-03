@@ -30,14 +30,13 @@ RUN apt-get -y install git
 # Leverage a bind mount to requirements.txt to avoid having to copy them into
 # into this layer.
 
-# RUN --mount=type=cache,target=/root/.cache/pip \
-#     --mount=type=bind,source=requirements.txt,target=requirements.txt \
-#     python -m pip install -r requirements.txt
-COPY ./requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
-RUN pip install  channels["daphne"] 
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    python -m pip install -r requirements.txt
 RUN apt-get install -y libgl1-mesa-glx
 RUN apt-get install -y libglib2.0-0
+RUN pip uninstall channels daphne -y
+RUN pip install  channels["daphne"] 
 # Switch to the non-privileged user to run the application.
 
 # Expose the port that the application listens on.
