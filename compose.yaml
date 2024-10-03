@@ -23,12 +23,12 @@ services:
     <<: *server
     container_name: cotton-backend
     ports:
-     - ${port:-8000}:8000
+     - ${PORT:-8000}:8000
     volumes:
       - .:/none
     entrypoint: sh run.sh
     healthcheck:
-        test: ['CMD','curl','http://localhost:${port:-8000}/']
+        test: ['CMD','curl','http://localhost:${PORT:-8000}/']
         interval: 10s
         timeout: 5s
         retries: 2
