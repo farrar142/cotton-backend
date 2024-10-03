@@ -24,6 +24,8 @@ services:
     container_name: cotton-backend
     ports:
      - ${port:-8000}:8000
+    volumes:
+      - .:/none
     # entrypoint: sh run.sh
     healthcheck:
         test: ['CMD','curl','http://localhost:${port:-8000}/']
