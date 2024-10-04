@@ -1,5 +1,5 @@
 import base64
-from django.template.loader import render_to_string
+from typing import Callable, ParamSpec, TypeVar
 from base.test import TestCase
 
 from commons.authentication import CustomTokenObtainPairSerializer

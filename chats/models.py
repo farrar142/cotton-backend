@@ -73,7 +73,10 @@ class MessageGroup(models.Model):
 
 class MessageAttendant(models.Model):
     class Meta:
-        indexes = [models.Index(fields=["group", "user"])]
+        indexes = [
+            models.Index(fields=["group", "user"]),
+            models.Index(fields=["user"]),
+        ]
 
     group = models.ForeignKey(
         MessageGroup, on_delete=models.CASCADE, related_name="message_attendants"

@@ -78,11 +78,11 @@ class TestMessages(TestCase):
         # s2.send_message(self.user, "1")
         # s2.send_message(self.user3, "2")
 
-        resp = self.client.get("/message_groups/")
+        resp = self.record_query(self.client.get)("/message_groups/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["results"][0]["id"], s2.group.pk)
         self.assertEqual(resp.json()["results"][0]["latest_message"], "2")
 
         resp = self.client.get(f"/message_groups/{s2.group.pk}/messages/")
         self.assertEqual(resp.status_code, 200)
-        self.pprint(resp.json())
+        # self.pprint(resp.json())

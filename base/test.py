@@ -1,3 +1,4 @@
+import functools
 import time
 from typing import Any, Callable, Concatenate, Mapping, ParamSpec, Self, TypeVar
 from django.conf import settings
@@ -54,9 +55,34 @@ class Client(C):
         return super().delete(*args, **kwargs)
 
 
+from django.conf import settings
+from django.db import connection
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def record_query(func: Callable[P, T]):
+    # default_setting = settings.DEBUG
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs):
+        # connection.queries = []
+        result = func(*args, **kwargs)
+        after_queries = len(connection.queries)
+        print(f"{func.__name__} execed in {after_queries} queries")
+        pp(connection.queries)
+        return result
+
+    return wrapper
+
+
 class TestCase(TC):
     client_class = Client
     client: Client = Client()
+
+    @property
+    def record_query(self):
+        return record_query
 
     def __init__(self, methodName: str = "runTest") -> None:
         settings.DEBUG = True
