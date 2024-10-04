@@ -8,7 +8,10 @@ from .models import MessageGroup, Message, models
 @shared_task()
 def send_message_to_ws(message_id: int):
     if not (
-        message := Message.objects.annotate(user=models.F("attendant__user"))
+        message := Message.objects.annotate(
+            user=models.F("attendant__user"),
+            nickname=models.F("attendant__user__nickname"),
+        )
         .filter(pk=message_id)
         .first()
     ):

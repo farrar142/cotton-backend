@@ -27,6 +27,7 @@ class MessageGroupSerializer(BaseModelSerializer[MessageGroup]):
 class MessageSerializer(BaseModelSerializer[Message]):
     class Meta:
         model = Message
-        fields = ("user", "id", "created_at", "message", "identifier")
+        fields = ("user", "id", "created_at", "message", "identifier", "nickname")
 
     user = serializers.IntegerField()
+    nickname = serializers.CharField()

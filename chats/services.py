@@ -63,4 +63,7 @@ class MessageService:
         return instance
 
     def get_messages(self):
-        return self.group.messages.annotate(user=models.F("attendant__user")).all()
+        return self.group.messages.annotate(
+            user=models.F("attendant__user"),
+            nickname=models.F("attendant__user__nickname"),
+        ).all()

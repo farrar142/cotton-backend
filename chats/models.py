@@ -1,6 +1,7 @@
 from typing import Self
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
+from commons.model_utils import make_property_field
 from users.models import User
 
 
@@ -98,3 +99,6 @@ class Message(models.Model):
     )
     message = models.TextField()
     identifier = models.CharField(max_length=63)
+
+    user = make_property_field(0)
+    nickname = make_property_field("")
