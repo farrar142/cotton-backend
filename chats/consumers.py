@@ -13,7 +13,7 @@ class UserChatConsumer(AsyncJsonWebsocketConsumer):
         return f"message_user-{user_id}"
 
     async def connect(self):
-        self.group_id = self.scope["url_route"]["kwargs"]["group_id"]
+        self.group_id = self.scope["url_route"]["kwargs"]["user_id"]
         self.group_name = self.get_group_name(self.group_id)
         if self.channel_layer:
             await self.channel_layer.group_add(self.group_name, self.channel_name)
