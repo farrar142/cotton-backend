@@ -41,6 +41,10 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
             raise
         return MessageService.get_message_groups(self.request.user)
 
+    def retrieve(self, request, *args, **kwargs):
+        print(request.user)
+        return super().retrieve(request, *args, **kwargs)
+
     @action(methods=["POST"], detail=False, url_path="create")
     def create_group(self, *args, **kwargs):
         class CreateSerializer(serializers.Serializer):
