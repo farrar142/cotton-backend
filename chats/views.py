@@ -2,6 +2,7 @@ from rest_framework import exceptions
 
 from commons import permissions
 from commons.viewsets import BaseViewset
+from commons.paginations import TimelinePagination, CursorPagination
 
 from users.models import User
 
@@ -17,6 +18,8 @@ from .services import MessageService
 
 class MessageGroupViewset(BaseViewset[MessageGroup, User]):
     permission_classes = [permissions.AuthorizedOnly]
+    pagination_class = TimelinePagination
+    offset_field = "latest_message_created_at"
     queryset = MessageGroup.concrete_queryset()
 
     read_only_serializer = MessageGroupSerializer
@@ -69,7 +72,7 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         service = MessageService(group)
         self.get_queryset = lambda: service.get_messages()  # type:ignore
         self.get_serializer_class = lambda: MessageSerializer
-
+        self.pagination_class = CursorPagination
         return self.list(*args)
 
     @action(methods=["POST"], detail=True, url_path="send_message")
