@@ -5,6 +5,8 @@ from rest_framework.pagination import (
     PageNumberPagination as _PageNumberPagination,
     LimitOffsetPagination,
     BasePagination,
+    api_settings,
+    _positive_int,
 )
 from rest_framework.response import Response
 from commons.requests import Request
@@ -48,6 +50,7 @@ class TimelinePagination(BasePagination):
     offset_field = "id"
     offset_order: Literal["desc"] | Literal["asc"] = "desc"
     queryset: models.QuerySet
+    page_size = api_settings.PAGE_SIZE
 
     def get_offset(self, request: Request):
         return request.query_params.get("offset")
@@ -68,20 +71,27 @@ class TimelinePagination(BasePagination):
             return f"-"
         return ""
 
+    def get_page_size(self, request: Request):
+        page_size_query_param = _positive_int(
+            request.query_params.get("page_size", self.page_size)
+        )
+        return page_size_query_param
+
     def paginate_queryset(self, queryset, request, view=None):
         self._offset = self.get_offset(request)
         self._direction = self.get_direction(request)
         self._offset_field = self.get_offset_field(request, view)
         self._offset_order = self.get_offset_order(request, view)
+        page_size = self.get_page_size(request)
         query_params = {f"{self._offset_field}{self._direction}": self._offset}
         if not self._offset:
             query_params = {}
         self.queryset = queryset.filter(**query_params).order_by(
             f"{self._offset_order}{self._offset_field}", f"{self._offset_order}id"
         )
-        self.sliced_queryset = self.queryset[0:10]
-        self.next_queryset = self.queryset[10:11]
-        return self.sliced_queryset
+        self.sliced_queryset = list(self.queryset[0 : page_size + 1])
+        self.next_queryset = self.sliced_queryset[page_size : page_size + 1]
+        return self.sliced_queryset[:page_size]
 
     def get_response_current_offset(self, data):
         if not data:
@@ -90,12 +100,9 @@ class TimelinePagination(BasePagination):
             return None
         return data[0].get(self._offset_field, None)
 
-    def get_has_next(self):
-        return bool(self.next_queryset[0])
-
     def get_paginated_response(self, data):
         next_offset = None
-        if 1 <= self.next_queryset.count():
+        if 1 <= len(self.next_queryset):
             next_offset = getattr(self.next_queryset[0], self._offset_field, None)
         return Response(
             {
