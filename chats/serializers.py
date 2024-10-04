@@ -29,5 +29,6 @@ class MessageSerializer(BaseModelSerializer[Message]):
         model = Message
         fields = ("user", "id", "created_at", "message", "identifier", "nickname")
 
+    group = serializers.PrimaryKeyRelatedField(queryset=MessageGroup.objects.all())
     user = serializers.IntegerField()
     nickname = serializers.CharField()
