@@ -23,6 +23,10 @@ class UserChatConsumer(AsyncJsonWebsocketConsumer):
         if self.channel_layer:
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
+    async def emit_message(self, event):
+        message = event["message"]
+        await self.send(text_data=json.dumps(message))
+
     @classmethod
     def send_message(cls, user_id: int | str, message: dict):
         layer = get_channel_layer()

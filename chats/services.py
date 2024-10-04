@@ -5,7 +5,7 @@ from rest_framework import exceptions
 from commons.lock import with_lock
 
 from .models import User, MessageGroup, MessageAttendant, Message, models
-from .tasks import send_message_to_ws
+from .tasks import send_message_by_ws_to_group
 
 
 class MessageService:
@@ -59,7 +59,7 @@ class MessageService:
         instance = attendant.messages.create(
             group=self.group, message=message, identifier=identifier
         )
-        send_message_to_ws.delay(instance.pk)
+        send_message_by_ws_to_group.delay(instance.pk)
         return instance
 
     def get_messages(self):

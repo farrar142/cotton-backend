@@ -1,23 +1,35 @@
 from commons.celery import shared_task
 
-from .consumers import ChatConsumer
+from .consumers import ChatConsumer, UserChatConsumer
 from .serializers import MessageSerializer
 from .models import MessageGroup, Message, models
 
 
 @shared_task()
-def send_message_to_ws(message_id: int):
+def send_message_by_ws_to_group(message_id: int):
     if not (
         message := Message.objects.annotate(
             user=models.F("attendant__user"),
             nickname=models.F("attendant__user__nickname"),
+        )
+        .prefetch_related(
+            models.Prefetch(
+                "group", MessageGroup.objects.prefetch_related("attendants")
+            )
         )
         .filter(pk=message_id)
         .first()
     ):
         return
     data = MessageSerializer(message).data
-    ChatConsumer.send_message(message.group_id, data)  # type:ignore
+    for user in message.group.attendants.all():
+        send_message_by_ws_to_user(user.pk, data)  # type:ignore
+    # ChatConsumer.send_message(message.group_id, data)  # type:ignore
+
+
+@shared_task()
+def send_message_by_ws_to_user(user_id: int, message: dict):
+    UserChatConsumer.send_message(user_id, message)
 
 
 @shared_task()
