@@ -41,6 +41,7 @@ class UserViewSet(BaseViewset[User, User]):
     def me(self, *args, **kwargs):
         if self.request.user.is_anonymous:
             raise exceptions.AuthenticationFailed
+        print(self.request.user)
         data = self.read_only_serializer(
             instance=self.get_queryset().get(pk=self.request.user.pk)
         ).data
