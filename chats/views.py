@@ -73,6 +73,7 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         self.get_queryset = lambda: service.get_messages()  # type:ignore
         self.get_serializer_class = lambda: MessageSerializer
         self.pagination_class = CursorPagination
+        self.pagination_class.page_size = 20
         return self.list(*args)
 
     @action(methods=["POST"], detail=True, url_path="send_message")
