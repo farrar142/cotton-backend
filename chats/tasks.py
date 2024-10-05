@@ -1,6 +1,6 @@
 from commons.celery import shared_task
 
-from .consumers import ChatConsumer, UserChatConsumer
+from .consumers import ChatConsumer, UserConsumer
 from .serializers import MessageSerializer
 from .models import MessageGroup, Message, models
 
@@ -30,7 +30,7 @@ def send_message_by_ws_to_group(message_id: int):
 
 @shared_task()
 def send_message_by_ws_to_user(user_id: int, message: dict):
-    UserChatConsumer.send_message(user_id, message)
+    UserConsumer.send_message(user_id, message)
 
 
 @shared_task()

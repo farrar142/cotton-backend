@@ -7,7 +7,7 @@ from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
-class UserChatConsumer(AsyncJsonWebsocketConsumer):
+class UserConsumer(AsyncJsonWebsocketConsumer):
     @staticmethod
     def get_group_name(user_id: int | str):
         return f"message_user-{user_id}"
@@ -54,9 +54,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if self.channel_layer:
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def emit_message(self, event):
-        message = event["message"]
-        await self.send(text_data=json.dumps(message))
+    async def emit_event(self, event):
+        data = event["data"]
+        await self.send(text_data=json.dumps(data))
 
     @classmethod
     def send_message(cls, group_id: int | str, message: dict):
@@ -65,5 +65,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return
         async_to_sync(layer.group_send)(
             cls.get_group_name(group_id),
-            dict(type="emit_message", message=message),
+            dict(type="emit_event", data=dict(type="message", message=message)),
+        )
+
+    @classmethod
+    def send_notification(cls, group_id: int | str, message: dict):
+        layer = get_channel_layer()
+        if not layer:
+            return
+        async_to_sync(layer.group_send)(
+            cls.get_group_name(group_id),
+            data=dict(
+                type="emit_event", data=dict(type="notification", message=message)
+            ),
         )
