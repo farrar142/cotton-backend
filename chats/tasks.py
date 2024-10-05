@@ -11,6 +11,7 @@ def send_message_by_ws_to_group(message_id: int):
         message := Message.objects.annotate(
             user=models.F("attendant__user"),
             nickname=models.F("attendant__user__nickname"),
+            has_checked=models.Value(False),
         )
         .prefetch_related(
             models.Prefetch(

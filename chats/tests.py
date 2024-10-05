@@ -86,3 +86,38 @@ class TestMessages(TestCase):
         resp = self.client.get(f"/message_groups/{s2.group.pk}/messages/")
         self.assertEqual(resp.status_code, 200)
         # self.pprint(resp.json())
+
+
+class TestMessage(TestCase):
+    def test_message_check(self):
+        self.client.login(self.user)
+        resp = self.client.post(
+            "/message_groups/create/", dict(users=[self.user.pk, self.user2.pk])
+        )
+        self.assertEqual(resp.status_code, 201)
+        s1 = MessageService(MessageGroup.objects.get(pk=resp.json()["id"]))
+        self.assertEqual(MessageService.get_unreaded_message(self.user).exists(), False)
+        # 그룹메세지 보내기
+        self.client.post(
+            f"/message_groups/{s1.group.pk}/send_message/", dict(message="1")
+        )
+        self.assertEqual(MessageService.get_unreaded_message(self.user).exists(), True)
+        self.assertEqual(MessageService.get_unreaded_message(self.user2).exists(), True)
+        self.assertEqual(
+            MessageService.get_unreaded_message(self.user3).exists(), False
+        )
+        resp = self.client.get(f"/message_groups/{s1.group.pk}/")
+        self.assertEqual(resp.json().get("has_unreaded_messages"), True)
+        self.client.login(self.user2)
+        resp = self.client.get(f"/message_groups/{s1.group.pk}/")
+        self.assertEqual(resp.json().get("has_unreaded_messages"), True)
+
+        s1.check_message(self.user)
+        self.assertEqual(MessageService.get_unreaded_message(self.user).exists(), False)
+        self.assertEqual(MessageService.get_unreaded_message(self.user2).exists(), True)
+        self.assertEqual(
+            MessageService.get_unreaded_message(self.user3).exists(), False
+        )
+        self.client.login(self.user)
+        resp = self.client.get(f"/message_groups/{s1.group.pk}/")
+        self.assertEqual(resp.json().get("has_unreaded_messages"), True)

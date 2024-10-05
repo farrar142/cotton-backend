@@ -1,10 +1,11 @@
 from uuid import uuid4
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction, models
 from rest_framework import exceptions
 
 from commons.lock import with_lock
 
-from .models import User, MessageGroup, MessageAttendant, Message, models
+from .models import User, MessageGroup, MessageAttendant, Message, MessageCheck, models
 from .tasks import send_message_by_ws_to_group
 
 
@@ -62,8 +63,27 @@ class MessageService:
         send_message_by_ws_to_group.delay(instance.pk)
         return instance
 
-    def get_messages(self):
+    def get_messages(self, user: User):
         return self.group.messages.annotate(
             user=models.F("attendant__user"),
             nickname=models.F("attendant__user__nickname"),
+            has_checked=Message.get_has_checked(user),
         ).all()
+
+    @classmethod
+    def get_unreaded_message(cls, user: AbstractBaseUser):
+        return Message.objects.annotate(
+            user=models.F("attendant__user"),
+            nickname=models.F("attendant__user__nickname"),
+            has_checked=Message.get_has_checked(user),
+        ).filter(
+            has_checked=False,
+            group__attendants=user,
+        )
+
+    def check_message(self, user: AbstractBaseUser):
+        messages = self.__class__.get_unreaded_message(user).filter(group=self.group)
+        message_checks = [
+            MessageCheck(user=user, message=message) for message in messages
+        ]
+        MessageCheck.objects.bulk_create(message_checks)

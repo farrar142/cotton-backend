@@ -14,6 +14,8 @@ class MessageGroup(models.Model):
     )
     messages: "models.Manager[Message]"
 
+    has_unreaded_messages = make_property_field(False)
+
     @classmethod
     def concrete_queryset(cls, user: AbstractBaseUser | None = None):
         if user and user.is_authenticated == False:
@@ -25,6 +27,13 @@ class MessageGroup(models.Model):
             latest_message_user=cls.get_latest_message_user(),
             latest_message_nickname=cls.get_latest_message_nickname(),
             latest_message_created_at=cls.get_latest_message_created_at(),
+            has_unreaded_messages=models.Exists(
+                Message.objects.annotate(
+                    has_checked=Message.get_has_checked(user),
+                ).filter(
+                    group=models.OuterRef("pk"),
+                )
+            ),
         )
 
     @classmethod
@@ -105,3 +114,29 @@ class Message(models.Model):
 
     user = make_property_field(0)
     nickname = make_property_field("")
+    has_checked = make_property_field(False)
+
+    checks: "models.Manager[MessageCheck]"
+
+    @classmethod
+    def get_has_checked(cls, user: AbstractBaseUser | None = None):
+        if user and not user.is_authenticated:
+            user = None
+        if not user:
+            return models.Value(False)
+        return models.functions.Coalesce(
+            models.Exists(
+                MessageCheck.objects.filter(user=user, message=models.OuterRef("pk"))
+            ),
+            models.Value(False),
+        )
+
+
+class MessageCheck(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="checked_messages"
+    )
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE, related_name="checks"
+    )

@@ -66,6 +66,17 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         response.status_code = 201
         return response
 
+    @action(methods=["GET"], detail=False, url_path="has_unreaded_messages")
+    def get_has_unreaded_messages(self, *args, **kwargs):
+        unreaded = MessageService.get_unreaded_message(self.request.user)
+        return self.result_response(unreaded.exists())
+
+    @action(methods=["POST"], detail=True, url_path="check_as_readed")
+    def get_check_messages(self, *args, **kwargs):
+        service = MessageService(self.get_object())
+        service.check_message(self.request.user)
+        return self.result_response(True)
+
     @action(methods=["GET"], detail=True, url_path="messages")
     def get_messages(self, *args, **kwargs):
         group = self.get_object()
