@@ -44,7 +44,5 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
             return
         async_to_sync(layer.group_send)(
             cls.get_group_name(group_id),
-            data=dict(
-                type="emit_event", data=dict(type="notification", message=message)
-            ),
+            dict(type="emit_event", data=dict(type="notification", message=message)),
         )
