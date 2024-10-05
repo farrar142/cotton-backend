@@ -153,7 +153,6 @@ class Notification(
             .concrete_queryset(user, *args, **kwargs)
             .select_related("favorited_post", "reposted_post", "mentioned_post")
             .prefetch_related(
-                models.Prefetch("user", User.concrete_queryset(user)),
                 models.Prefetch("from_user", User.concrete_queryset(user)),
             )
         )
