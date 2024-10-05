@@ -29,7 +29,7 @@ class image_upload_to:
     def __call__(self, instance: T, filename: str):
         ctype = ContentType.objects.get_for_model(instance.__class__)
         ext = os.path.splitext(filename)[-1]
-        return f"{ctype.name}:{instance.pk}/{self.prefix}/{uuid.uuid4()}.{ext}"
+        return f"{ctype.name}:{instance.pk}/{self.prefix}/{uuid.uuid4()}.{ext.replace('.','')}"
 
 
 original = image_upload_to("original")
