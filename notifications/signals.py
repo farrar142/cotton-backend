@@ -13,4 +13,7 @@ def on_notification_created(
         return
     qs = Notification.concrete_queryset(user=instance.user).get(pk=instance.pk)
     serializer = NotificationSerializer(qs)
+    if qs.user.pk == qs.from_user.pk:
+        qs.delete()
+        return
     UserConsumer.send_notification(instance.user_id, serializer.data)  # type:ignore
