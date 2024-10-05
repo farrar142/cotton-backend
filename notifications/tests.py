@@ -26,15 +26,19 @@ class TestNotification(TestCase):
         self.client.login(self.user)
 
         resp = self.client.get("/notifications/")
-        self.assertEqual(resp.json()["results"].__len__(), 2)
-        self.pprint(resp.json())
+        self.assertEqual(resp.json()["results"].__len__(), 1)
         noti2_id = resp.json()["results"][0]["id"]
+        resp = self.client.get("/notifications/unchecked_count/")
+        self.assertEqual(resp.json()["count"], 1)
+
         resp = self.client.post(f"/notifications/{noti2_id}/check/")
         self.assertEqual(resp.status_code, 201)
+        resp = self.client.get("/notifications/unchecked_count/")
+        self.assertEqual(resp.json()["count"], 0)
         resp = self.client.get("/notifications/")
-        self.assertEqual(resp.json()["results"].__len__(), 2)
+        self.assertEqual(resp.json()["results"].__len__(), 1)
         self.assertEqual(resp.json()["results"][0]["is_checked"], True)
 
         self.client.login(self.user2)
         resp = self.client.get("/notifications/")
-        self.assertEqual(resp.json()["results"].__len__(), 0)
+        self.assertEqual(resp.json()["results"].__len__(), 1)

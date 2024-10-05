@@ -25,3 +25,10 @@ class NotificationViewSet(BaseViewset[Notification, User]):
         instance.is_checked = True
         instance.save()
         return self.result_response(True, 201)
+
+    @BaseViewset.action(methods=["GET"], detail=False, url_path="unchecked_count")
+    def get_unchecked_count(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        count = queryset.filter(is_checked=False).count()
+
+        return self.Response(dict(count=count))
