@@ -14,7 +14,7 @@ class MessageGroup(models.Model):
     )
     messages: "models.Manager[Message]"
 
-    has_unreaded_messages = make_property_field(False)
+    unreaded_messages = make_property_field(0)
 
     @classmethod
     def concrete_queryset(cls, user: AbstractBaseUser | None = None):
@@ -27,12 +27,18 @@ class MessageGroup(models.Model):
             latest_message_user=cls.get_latest_message_user(),
             latest_message_nickname=cls.get_latest_message_nickname(),
             latest_message_created_at=cls.get_latest_message_created_at(),
-            has_unreaded_messages=models.Exists(
+            unreaded_messages=models.Count(
                 Message.objects.annotate(
                     has_checked=Message.get_has_checked(user),
-                ).filter(
+                )
+                .filter(
+                    has_checked=False,
                     group=models.OuterRef("pk"),
                 )
+                .values("group")
+                .order_by("group")
+                .annotate(count=models.Count("group"))
+                .values("count")
             ),
         )
 

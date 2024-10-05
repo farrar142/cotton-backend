@@ -60,6 +60,7 @@ class MessageService:
         instance = attendant.messages.create(
             group=self.group, message=message, identifier=identifier
         )
+        instance.checks.create(user=user)
         send_message_by_ws_to_group.delay(instance.pk)
         return instance
 

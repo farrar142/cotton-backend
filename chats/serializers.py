@@ -15,7 +15,7 @@ class MessageGroupSerializer(BaseModelSerializer[MessageGroup]):
             "latest_message_user",
             "latest_message_nickname",
             "latest_message_created_at",
-            "has_unreaded_messages",
+            "unreaded_messages",
         )
 
     attendants = UserSerializer(many=True)
@@ -23,7 +23,7 @@ class MessageGroupSerializer(BaseModelSerializer[MessageGroup]):
     latest_message_nickname = serializers.CharField(required=False)
     latest_message_user = serializers.IntegerField(required=False)
     latest_message_created_at = serializers.DateTimeField(required=False)
-    has_unreaded_messages = serializers.BooleanField(required=False)
+    unreaded_messages = serializers.IntegerField(required=False)
 
 
 class MessageSerializer(BaseModelSerializer[Message]):

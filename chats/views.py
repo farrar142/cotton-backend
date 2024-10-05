@@ -69,7 +69,7 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
     @action(methods=["GET"], detail=False, url_path="has_unreaded_messages")
     def get_has_unreaded_messages(self, *args, **kwargs):
         unreaded = MessageService.get_unreaded_message(self.request.user)
-        return self.result_response(unreaded.exists(), 200)
+        return self.Response(dict(count=unreaded.count()))
 
     @action(methods=["POST"], detail=True, url_path="check_as_readed")
     def post_check_messages(self, *args, **kwargs):
