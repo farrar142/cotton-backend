@@ -7,9 +7,10 @@ from chats.consumers import UserConsumer
 
 @receiver(post_save, sender=Notification)
 def on_notification_created(
-    sender: type[Notification], instance: Notification, **kwargs
+    sender: type[Notification], instance: Notification, created: bool, **kwargs
 ):
-
+    if not created:
+        return
     qs = Notification.concrete_queryset(user=instance.user).get(pk=instance.pk)
     serializer = NotificationSerializer(qs)
     UserConsumer.send_notification(instance.user_id, serializer.data)  # type:ignore
