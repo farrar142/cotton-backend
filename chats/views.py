@@ -81,7 +81,9 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
     def get_messages(self, *args, **kwargs):
         group = self.get_object()
         service = MessageService(group)
-        self.get_queryset = lambda: service.get_messages()  # type:ignore
+        self.get_queryset = lambda: service.get_messages(
+            self.request.user
+        )  # type:ignore
         self.get_serializer_class = lambda: MessageSerializer
         self.pagination_class = CursorPagination
         self.pagination_class.page_size = 20

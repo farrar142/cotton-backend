@@ -121,3 +121,5 @@ class TestMessage(TestCase):
         self.client.login(self.user)
         resp = self.client.get(f"/message_groups/{s1.group.pk}/")
         self.assertEqual(resp.json().get("has_unreaded_messages"), True)
+        resp = self.client.get(f"/message_groups/{s1.group.pk}/messages/")
+        self.assertEqual(resp.status_code, 200)
