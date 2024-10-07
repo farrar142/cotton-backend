@@ -1,13 +1,17 @@
 import json
 from typing import Any
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 
 
 from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
+from commons.authentication import CustomJWTAuthentication
+
 
 class UserConsumer(AsyncJsonWebsocketConsumer):
+    signed = False
+
     @staticmethod
     def get_group_name(user_id: int | str):
         return f"message_user-{user_id}"
@@ -23,7 +27,24 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
         if self.channel_layer:
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
+    async def receive_json(self, content, **kwargs):
+        if not (access := content.get("access", None)):
+            return
+        try:
+            auth = CustomJWTAuthentication()
+            raw_token = auth.get_validated_token(access.encode())
+            user = await sync_to_async(auth.get_user)(raw_token)
+            if int(self.group_id) == user.pk:
+                self.signed = True
+            else:
+                await self.send(json.dumps(dict(type="authorization", result=False)))
+        except:
+            print("exception")
+            await self.send(json.dumps(dict(type="authorization", result=False)))
+
     async def emit_event(self, event):
+        if not self.signed:
+            return
         data = event["data"]
         await self.send(text_data=json.dumps(data))
 
