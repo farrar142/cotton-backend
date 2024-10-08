@@ -6,8 +6,6 @@ from asgiref.sync import async_to_sync, sync_to_async
 from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from commons.authentication import CustomJWTAuthentication
-
 
 class UserConsumer(AsyncJsonWebsocketConsumer):
     signed = False
@@ -31,6 +29,8 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
         if not (access := content.get("access", None)):
             return
         try:
+            from commons.authentication import CustomJWTAuthentication
+
             auth = CustomJWTAuthentication()
             raw_token = auth.get_validated_token(access.encode())
             user = await sync_to_async(auth.get_user)(raw_token)
