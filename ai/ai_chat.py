@@ -3,6 +3,8 @@ from langchain_core.messages import BaseMessage
 from langchain_community.chat_models.ollama import ChatOllama
 from openai import OpenAI
 from openai.types.chat import ChatCompletionAssistantMessageParam
+
+from django.conf import settings
 from users.models import User
 
 
@@ -12,7 +14,7 @@ def ai_chat(ai: User, post: dict, previous_post: list[dict] | None = None) -> st
         assistant = ChatCompletionAssistantMessageParam(
             role="assistant", content=json.dumps(previous_post)
         )
-    ollama = OpenAI(base_url="http://host.docker.internal:11434/v1", api_key="ollama")
+    ollama = OpenAI(base_url=settings.OLLAMA_URL, api_key="ollama")
     result = ollama.chat.completions.create(
         model="llama3",
         messages=[
