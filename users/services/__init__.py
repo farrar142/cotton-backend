@@ -76,7 +76,7 @@ class AuthService:
         kakao_id, nickname = resp["id"], resp["kakao_account"]["profile"]["nickname"]
         print(kakao_id, nickname)
         temp_email = kakao_id + "@" + "kakao.com"
-        print(kakao_id, nickname)
+        print(kakao_id, nickname, temp_email)
         if not (
             user := User.objects.filter(
                 third_party_integrations__provider_email=temp_email
@@ -96,6 +96,7 @@ class AuthService:
             )
             print(integration)
             integration.save()
+        print(user)
         refresh = TokenS.get_token(user)
         access = str(refresh.access_token)
         return dict(refresh=str(refresh), access=access)
