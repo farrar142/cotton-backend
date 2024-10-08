@@ -32,8 +32,9 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
             from commons.authentication import CustomJWTAuthentication
 
             auth = CustomJWTAuthentication()
-            raw_token = auth.get_validated_token(access.encode())
-            user = await sync_to_async(auth.get_user)(raw_token)
+            if not (user := auth.get_cached_user(access)):
+                raw_token = auth.get_validated_token(access.encode())
+                user = await sync_to_async(auth.get_user)(raw_token)
             if int(self.group_id) == user.pk:
                 self.signed = True
             else:

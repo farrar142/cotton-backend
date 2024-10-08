@@ -11,11 +11,14 @@ class CustomJWTAuthentication(JWTAuthentication):
 
     def authenticate(self, request: Request):
         access = request.META.get("HTTP_AUTHORIZATION")
-        if data := cache.get(access, None):
+        if data := self.get_cached_user(access):
             return data
         token = super().authenticate(request)
         cache.set(access, token, timeout=600)
         return token
+
+    def get_cached_user(self, token: str):
+        return cache.get(token, None)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
