@@ -186,7 +186,7 @@ class ThirdPartyProvider(models.TextChoices):
 class ThirdPartyIntegration(models.Model):
     created_at = models.DateTimeField(auto_now=True)
     provider = models.CharField(max_length=64, choices=ThirdPartyProvider.choices)
-    provider_id = models.IntegerField()
+    provider_id = models.PositiveBigIntegerField()
     provider_email = models.EmailField()
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="third_party_integrations"

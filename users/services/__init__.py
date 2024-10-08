@@ -70,8 +70,8 @@ class AuthService:
         )
         return resp.json()
 
-    @atomic
     @classmethod
+    @atomic()
     def signin_kakao(cls, code: str, redirect_uri: str):
         resp = cls.get_kakao_user(code, redirect_uri)
         print(resp)
