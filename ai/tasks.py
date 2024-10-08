@@ -92,6 +92,7 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
     content = ai_chat(user, data, origins_data)
     builder = BlockTextBuilder()
     builder.text(content)
+    print(builder.get_plain_text())
     ser = PostSerializer(
         data=dict(
             text=builder.get_plain_text(),
