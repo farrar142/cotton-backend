@@ -61,7 +61,7 @@ class AuthService:
             ),
         )
         if resp.status_code != 200:
-            raise exceptions.ValidationError(detail=dict(kakao=["인증 실패"]))
+            raise exceptions.ValidationError(detail=resp.json())
         access_token = resp.json().get("access_token")
         resp = requests.get(
             "https://kapi.kakao.com/v2/user/me",
