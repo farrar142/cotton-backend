@@ -84,6 +84,7 @@ class AuthService:
             user = User(
                 email=temp_email, username=f"kakao_{kakao_id}", nickname=nickname
             )
+            user.is_registered = True
             user.set_password(None)
             user.save()
             integration = ThirdPartyIntegration(
