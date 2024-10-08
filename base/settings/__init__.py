@@ -177,8 +177,12 @@ CELERY_TASK_SERIALIZER = "pickle"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://cottontest.honeycombpizza.link",
+    "http://192.168.0.7",
 ]
-CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+\.honeycombpizza\.link$"]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://\w+\.honeycombpizza\.link$",
+    r"^https://\w+\.cottontest.honeycombpizza\.link$",
+]
 
 # S3
 
