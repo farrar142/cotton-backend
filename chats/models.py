@@ -8,6 +8,7 @@ from users.models import User
 # Create your models here.
 class MessageGroup(models.Model):
     is_direct_message = models.BooleanField(default=True)
+    title = models.CharField(max_length=255, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     attendants: "models.ManyToManyField[User,Self]" = models.ManyToManyField(
         User, through="MessageAttendant", related_name="message_groups"

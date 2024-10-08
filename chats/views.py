@@ -52,15 +52,23 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
     def create_group(self, *args, **kwargs):
         class CreateSerializer(serializers.Serializer):
             users = UserSerializer(many=True, queryset=User.objects.all())
-            is_direct_message = serializers.BooleanField(default=False, required=False)
+            title = serializers.CharField(max_length=255, default="", required=False)
 
         serializer = CreateSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        is_direct_message = serializer.validated_data[  # type:ignore
-            "is_direct_message"
+        title = serializer.validated_data["title"]  # type:ignore
+        users: list[User] = [
+            self.request.user,
+            *serializer.validated_data["users"],  # type:ignore
         ]
-        users: list[User] = serializer.validated_data["users"]  # type:ignore
-        service = MessageService.create(*users, is_direct_message=is_direct_message)
+        pk_flattened = set(map(lambda x: x.pk, users))
+        if len(set(pk_flattened)) == 1:
+            raise exceptions.ValidationError(
+                detail=dict(user=["자신에게 대화를 보낼 수 없습니다."])
+            )
+        service = MessageService.create(
+            *users, is_direct_message=len(pk_flattened) == 2, title=title
+        )
         self.get_object = lambda: service.group
         response = self.retrieve(*args, **kwargs)
         response.status_code = 201

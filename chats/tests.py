@@ -87,6 +87,20 @@ class TestMessages(TestCase):
         self.assertEqual(resp.status_code, 200)
         # self.pprint(resp.json())
 
+    def test_multi_group(self):
+        self.client.login(self.user)
+        # 그룹메세지 만들기
+        resp = self.client.post(
+            "/message_groups/create/",
+            dict(
+                users=[self.user.pk, self.user2.pk, self.user3.pk],
+                title="강남역 12월모임",
+            ),
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json()["is_direct_message"], False)
+        self.assertEqual(resp.json()["title"], "강남역 12월모임")
+
 
 class TestMessage(TestCase):
     def test_message_check(self):

@@ -12,19 +12,17 @@ from .tasks import send_message_by_ws_to_group
 class MessageService:
     @classmethod
     @transaction.atomic
-    def create(cls, *users: User, is_direct_message: bool = True):
+    def create(cls, *users: User, is_direct_message: bool = True, title: str = ""):
         pk_flattened = map(lambda u: u.pk, users)
-        if len(set(pk_flattened)) == 1:
-            raise exceptions.ValidationError(
-                detail=dict(user=["자신에게 대화를 보낼 수 없습니다."])
-            )
         key = "message-create=" + ":".join(sorted(map(str, pk_flattened)))
         with with_lock(key):
             if is_direct_message:
                 if group := cls.get_direct_message_group(*users):
                     return cls(group)
 
-            group = MessageGroup.objects.create(is_direct_message=is_direct_message)
+            group = MessageGroup.objects.create(
+                is_direct_message=is_direct_message, title=title
+            )
             group.attendants.add(*users)
             return cls(group)
 
