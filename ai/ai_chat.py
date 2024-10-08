@@ -34,5 +34,6 @@ def ai_chat(ai: User, post: dict, previous_post: list[dict] | None = None) -> st
             {"role": "user", "content": json.dumps(post)},
         ],
         max_tokens=2048 * 4,
+        max_completion_tokens=200,
     )
     return result.choices[0].message.content or ""
