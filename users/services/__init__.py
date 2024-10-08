@@ -53,7 +53,7 @@ class AuthService:
         resp = requests.post(
             "https://kauth.kakao.com/oauth/token",
             dict(
-                code="FEzhJYgS8FWg-hUqaY0_Gkiw7HPDtKSyoGsDc-D9EHEYO9AZ4_by9AAAAAQKPCPnAAABkmpl9uaBPKUF0hG4dQ",
+                code=code,
                 client_id=settings.KAKAO_CLIENT_KEY,
                 client_secret=settings.KAKAO_SECRET_KEY,
                 redirect_uri=redirect_uri,
