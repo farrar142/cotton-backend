@@ -85,6 +85,7 @@ class AuthService:
             user = User(
                 email=temp_email, username=f"kakao_{kakao_id}", nickname=nickname
             )
+            print(user)
             user.set_password(None)
             user.save()
             integration = ThirdPartyIntegration(
@@ -93,6 +94,7 @@ class AuthService:
                 provider_email=temp_email,
                 user=user,
             )
+            print(integration)
             integration.save()
         refresh = TokenS.get_token(user)
         access = str(refresh.access_token)
