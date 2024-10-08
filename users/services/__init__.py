@@ -2,6 +2,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.timezone import localtime
+from django.db.transaction import atomic
 import requests
 from rest_framework import serializers, exceptions
 
@@ -69,6 +70,7 @@ class AuthService:
         )
         return resp.json()
 
+    @atomic
     @classmethod
     def signin_kakao(cls, code: str, redirect_uri: str):
         resp = cls.get_kakao_user(code, redirect_uri)
@@ -94,8 +96,8 @@ class AuthService:
                 provider_email=temp_email,
                 user=user,
             )
-            print(integration)
             integration.save()
+            print(integration)
         print(user)
         refresh = TokenS.get_token(user)
         access = str(refresh.access_token)
