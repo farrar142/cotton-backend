@@ -1,6 +1,8 @@
 from uuid import uuid4
+from django.conf import settings
 from django.core.cache import cache
 from django.utils.timezone import localtime
+import requests
 from rest_framework import serializers, exceptions
 
 from commons.requests import Request
@@ -12,6 +14,11 @@ from commons.lock import with_lock
 
 from ..models import User
 from ..tasks import send_register_email
+
+
+class KakaoAuthorizationSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    redirect_uri = serializers.URLField()
 
 
 class SigninSerializer(serializers.Serializer):
@@ -40,6 +47,27 @@ class CodeKeySerializer(serializers.Serializer):
 class AuthService:
     def __init__(self, user: User):
         self.user = user
+
+    @classmethod
+    def signin_kakao(cls, code: str, redirect_uri: str):
+        resp = requests.post(
+            "https://kauth.kakao.com/oauth/token",
+            dict(
+                code="FEzhJYgS8FWg-hUqaY0_Gkiw7HPDtKSyoGsDc-D9EHEYO9AZ4_by9AAAAAQKPCPnAAABkmpl9uaBPKUF0hG4dQ",
+                client_id=settings.KAKAO_CLIENT_KEY,
+                client_secret=settings.KAKAO_SECRET_KEY,
+                redirect_uri=redirect_uri,
+                grant_type="authorization_code",
+            ),
+        )
+        if resp.status_code != 200:
+            raise exceptions.ValidationError(detail=dict(kakao=["인증 실패"]))
+        access_token = resp.json().get("access_token")
+        resp = requests.get(
+            "https://kapi.kakao.com/v2/user/me",
+            headers=dict(Authorization=f"Bearer {access_token}"),
+        )
+        return resp.json()
 
     @classmethod
     def signin(cls, email: str, password: str):

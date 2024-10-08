@@ -1,5 +1,9 @@
 import base64
+import json
+from os import getenv
 from typing import Callable, ParamSpec, TypeVar
+
+import requests
 from base.test import TestCase
 
 from commons.authentication import CustomTokenObtainPairSerializer
@@ -119,3 +123,8 @@ class TestEmailAuthorization(TestCase):
         AuthService.register_user(code_key=code_key)
         self.user.refresh_from_db()
         self.assertEqual(self.user.is_registered, True)
+
+
+class TestThirdParty(TestCase):
+    def test_kakao(self):
+        pass

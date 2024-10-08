@@ -13,12 +13,20 @@ from ..services import (
     SigninSerializer,
     CodeKeySerializer,
     TokenSerializer,
+    KakaoAuthorizationSerializer,
 )
 
 
 class AuthViewSet(GenericViewSet):
     authentication_classes = ()
     serializer_class = serializers.Serializer
+
+    @action(methods=["POST"], detail=False, url_path="kakao/signin")
+    def kakao_signin(self, *args, **kwargs):
+        ser = KakaoAuthorizationSerializer(data=self.request.data)  # type:ignore
+        ser.is_valid(raise_exception=True)
+        data = AuthService.signin_kakao(**ser.data)  # type:ignore
+        return Response(data)
 
     @action(methods=["POST"], detail=False, url_path="signin")
     def signin(self, r, *args, **kwargs):
