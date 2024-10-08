@@ -56,6 +56,7 @@ class User(UserAbstract):
     followers: models.Manager["User"]
     message_groups: "models.Manager[MessageGroup]"
     message_attendants: "models.Manager[MessageAttendant]"
+    third_party_integrations: "models.Manager[ThirdPartyIntegration]"
 
     followings_count = make_property_field(False)
     followers_count = make_property_field(False)
@@ -176,3 +177,17 @@ class User(UserAbstract):
 
     def save(self, *args, **kwargs) -> None:
         return super().save(*args, **kwargs)
+
+
+class ThirdPartyProvider(models.TextChoices):
+    KAKAO = "kakao"
+
+
+class ThirdPartyIntegration(models.Model):
+    created_at = models.DateTimeField(auto_now=True)
+    provider = models.CharField(max_length=64, choices=ThirdPartyProvider.choices)
+    provider_id = models.IntegerField()
+    provider_email = models.EmailField()
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="third_party_integrations"
+    )

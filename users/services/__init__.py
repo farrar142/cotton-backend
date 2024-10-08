@@ -12,7 +12,7 @@ from commons.authentication import (
 )
 from commons.lock import with_lock
 
-from ..models import User
+from ..models import User, ThirdPartyIntegration, ThirdPartyProvider
 from ..tasks import send_register_email
 
 
@@ -49,7 +49,7 @@ class AuthService:
         self.user = user
 
     @classmethod
-    def signin_kakao(cls, code: str, redirect_uri: str):
+    def get_kakao_user(cls, code: str, redirect_uri: str):
         resp = requests.post(
             "https://kauth.kakao.com/oauth/token",
             dict(
@@ -68,6 +68,32 @@ class AuthService:
             headers=dict(Authorization=f"Bearer {access_token}"),
         )
         return resp.json()
+
+    @classmethod
+    def signin_kakao(cls, code: str, redirect_uri: str):
+        resp = cls.get_kakao_user(code, redirect_uri)
+        kakao_id, nickname = resp["id"] = resp["kakao_account"]["profile"]["nickname"]
+        temp_email = kakao_id + "@" + "kakao.com"
+        if not (
+            user := User.objects.filter(
+                third_party_integrations__email=temp_email
+            ).first()
+        ):
+            user = User(
+                email=temp_email, username=f"kakao_{kakao_id}", nickname=nickname
+            )
+            user.set_password(None)
+            user.save()
+            integration = ThirdPartyIntegration(
+                provider=ThirdPartyProvider.KAKAO,
+                provider_id=kakao_id,
+                provider_email=temp_email,
+                user=user,
+            )
+            integration.save()
+        refresh = TokenS.get_token(user)
+        access = str(refresh.access_token)
+        return dict(refresh=str(refresh), access=access)
 
     @classmethod
     def signin(cls, email: str, password: str):
