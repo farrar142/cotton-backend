@@ -9,10 +9,10 @@ from images.models import Image
 
 
 class Post(CommonModel):
-    origin = models.ForeignKey(
+    origin: "models.ForeignKey[Self | None]" = models.ForeignKey(
         "Post", on_delete=models.DO_NOTHING, related_name="childrens", null=True
     )
-    parent: "models.ForeignKey[Self]" = models.ForeignKey(  # type:ignore
+    parent: "models.ForeignKey[Self|None]" = models.ForeignKey(  # type:ignore
         "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
     )
     quote: "models.ForeignKey[Self|None]" = models.ForeignKey(  # type:ignore

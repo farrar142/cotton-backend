@@ -88,8 +88,13 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
     builder = BlockTextBuilder()
     builder.text(content)
     ser = PostSerializer(
-        data=dict(text=builder.get_plain_text(), blocks=builder.get_json()), user=user
+        data=dict(
+            text=builder.get_plain_text(),
+            blocks=builder.get_json(),
+            parent=post.pk,
+            origin=post.origin.pk if post.origin else post.pk,
+        ),
+        user=user,
     )
     ser.is_valid(raise_exception=True)
     ser.save()
-    return ser.instance
