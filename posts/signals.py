@@ -7,6 +7,7 @@ from .models import Post, Repost, Bookmark, Favorite, Mention
 @receiver(post_save, sender=Post)
 def on_post_created(sender, instance: Post, **kwargs):
     from notifications.models import Notification
+    from ai.tasks import create_ai_post
 
     flag = False
     noti = Notification()
@@ -21,6 +22,7 @@ def on_post_created(sender, instance: Post, **kwargs):
         noti.quoted_post = instance
     if flag:
         noti.save()
+    create_ai_post.delay(post_id=instance.pk)
     return
 
 

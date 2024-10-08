@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "images",
     "notifications",
     "chats",
+    "ai",
 ]
 
 MIDDLEWARE = [
@@ -198,3 +199,5 @@ DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 # THIRD PARTY
 KAKAO_CLIENT_KEY = getenv("KAKAO_CLIENT_KEY")
 KAKAO_SECRET_KEY = getenv("KAKAO_SECRET_KEY")
+
+OLLAMA_URL = getenv("OLLAMA_URL")

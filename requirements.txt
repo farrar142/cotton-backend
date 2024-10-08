@@ -20,3 +20,11 @@ requests
 uvicorn==0.30.4
 websockets
 atproto
+
+# ai
+openai
+langchain
+langchain_community
+chromadb
+beautifulsoup4
+sentence-transformers

@@ -15,7 +15,7 @@ class Post(CommonModel):
     parent: "models.ForeignKey[Self]" = models.ForeignKey(  # type:ignore
         "Post", on_delete=models.DO_NOTHING, related_name="replies", null=True
     )
-    quote: "models.ForeignKey[Self]" = models.ForeignKey(  # type:ignore
+    quote: "models.ForeignKey[Self|None]" = models.ForeignKey(  # type:ignore
         "Post", on_delete=models.DO_NOTHING, related_name="quotes", null=True
     )
     depth = models.IntegerField(default=0)
@@ -42,6 +42,9 @@ class Post(CommonModel):
     has_bookmark = make_property_field(False)
     has_quote = make_property_field(False)
     has_repost = make_property_field(False)
+    is_reply_to_ai: int | None = make_property_field(None)
+    is_quote_to_ai: int | None = make_property_field(None)
+    is_mentioned_post: int | None = make_property_field(None)
     relavant_repost: "list[Repost]|None"  # prefetch의 to_attr은 getter setter를 통하여 할당이 불가능해 보임
 
     @classmethod

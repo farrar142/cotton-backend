@@ -21,7 +21,7 @@ WORKDIR /app
 # USER root
 
 
-RUN apt-get update && apt-get -y install libpq-dev gcc
+RUN apt-get update && apt-get -y install libpq-dev gcc g++ cmake
 RUN apt-get -y install git
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/

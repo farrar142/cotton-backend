@@ -47,7 +47,7 @@ class PostViewSet(BaseViewset[Post, User]):
     upsert_serializer = PostSerializer
     pagination_class = paginations.TimelinePagination
     offset_field = "latest_date"
-    filterset_fields = ("user__username",)
+    filterset_fields = ("user__username", "origin", "parent")
     search_fields = ("text",)
 
     action = BaseViewset.action
