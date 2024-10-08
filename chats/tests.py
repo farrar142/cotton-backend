@@ -89,6 +89,8 @@ class TestMessages(TestCase):
 
     def test_multi_group(self):
         self.client.login(self.user)
+        resp = self.client.get("/users/", dict(id__isnot=self.user.pk))
+        self.assertEqual(resp.status_code, 200)
         # 그룹메세지 만들기
         resp = self.client.post(
             "/message_groups/create/",
