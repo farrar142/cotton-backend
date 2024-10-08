@@ -33,7 +33,7 @@ def send_group_state_changed_to_users(group_id: int):
     if not group:
         return
     for user in group.attendants.all():
-        UserConsumer.send_group_message(user.pk)  # type:ignore
+        UserConsumer.send_group_message(user.pk, group.pk)  # type:ignore
 
 
 @shared_task()

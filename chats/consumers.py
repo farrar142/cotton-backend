@@ -59,14 +59,17 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
         )
 
     @classmethod
-    def send_group_message(cls, user_id: int | str):
+    def send_group_message(cls, user_id: int | str, message_group_id: int):
 
         layer = get_channel_layer()
         if not layer:
             return
         async_to_sync(layer.group_send)(
             cls.get_group_name(user_id),
-            dict(type="emit_event", data=dict(type="group", state="changed")),
+            dict(
+                type="emit_event",
+                data=dict(type="group", state="changed", id=message_group_id),
+            ),
         )
 
     @classmethod
