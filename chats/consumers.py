@@ -49,22 +49,33 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
         await self.send(text_data=json.dumps(data))
 
     @classmethod
-    def send_message(cls, group_id: int | str, message: dict):
+    def send_message(cls, user_id: int | str, message: dict):
         layer = get_channel_layer()
         if not layer:
             return
         async_to_sync(layer.group_send)(
-            cls.get_group_name(group_id),
+            cls.get_group_name(user_id),
             dict(type="emit_event", data=dict(type="message", message=message)),
         )
 
     @classmethod
-    def send_notification(cls, group_id: int | str, message: dict):
+    def send_group_message(cls, user_id: int | str):
+
         layer = get_channel_layer()
         if not layer:
             return
         async_to_sync(layer.group_send)(
-            cls.get_group_name(group_id),
+            cls.get_group_name(user_id),
+            dict(type="emit_event", data=dict(type="group", state="changed")),
+        )
+
+    @classmethod
+    def send_notification(cls, user_id: int | str, message: dict):
+        layer = get_channel_layer()
+        if not layer:
+            return
+        async_to_sync(layer.group_send)(
+            cls.get_group_name(user_id),
             dict(
                 type="emit_event", data=dict(type="notification", notification=message)
             ),

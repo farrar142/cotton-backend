@@ -74,6 +74,26 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         response.status_code = 201
         return response
 
+    @action(methods=["PATCH"], detail=True, url_path="change_title")
+    def change_title(self, *args, **kwrags):
+        instance = self.get_object()
+
+        class TitleSerializer(serializers.Serializer):
+            title = serializers.CharField(max_length=255)
+
+        s = TitleSerializer(data=self.request.data)
+        _, title = s.is_valid(
+            raise_exception=True
+        ), s.validated_data.get(  # type:ignore
+            "title", ""
+        )
+        instance.title = title
+        instance.save()
+        from .tasks import send_group_state_changed_to_users
+
+        send_group_state_changed_to_users.delay(instance.pk)
+        return self.result_response(True, 200)
+
     @action(methods=["GET"], detail=False, url_path="has_unreaded_messages")
     def get_has_unreaded_messages(self, *args, **kwargs):
         unreaded = MessageService.get_unreaded_message(self.request.user)

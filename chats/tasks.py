@@ -24,14 +24,21 @@ def send_message_by_ws_to_group(message_id: int):
         return
     data = MessageSerializer(message).data
     for user in message.group.attendants.all():
-        send_message_by_ws_to_user(user.pk, data)  # type:ignore
-    # ChatConsumer.send_message(message.group_id, data)  # type:ignore
+        UserConsumer.send_message(user.pk, data)#type:ignore
+
+
+
+@shared_task()
+def send_group_state_changed_to_users(group_id: int):
+    group = MessageGroup.objects.filter(pk=group_id).first()
+    if not group:
+        return
+    for user in group.attendants.all():
+        UserConsumer.send_group_message(user.pk)  # type:ignore
 
 
 @shared_task()
 def send_message_by_ws_to_user(user_id: int, message: dict):
-    UserConsumer.send_message(user_id, message)
-
 
 @shared_task()
 def delete_no_message_group(group_id):
