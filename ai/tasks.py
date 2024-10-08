@@ -79,7 +79,12 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
     post = Post.concrete_queryset(user).get(pk=post_id)
     origins_data = []
     if post.origin:
-        origins = Post.concrete_queryset(user).filter(origin=post.origin)
+        origins = (
+            Post.concrete_queryset(user)
+            .filter(origin=post.origin)
+            .order_by("-created_at")
+        )
+        print(origins)
         origins_data: list[dict] = PostSerializer(
             origins, many=True, user=user
         ).data  # type:ignore
