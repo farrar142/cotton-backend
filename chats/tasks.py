@@ -24,8 +24,7 @@ def send_message_by_ws_to_group(message_id: int):
         return
     data = MessageSerializer(message).data
     for user in message.group.attendants.all():
-        UserConsumer.send_message(user.pk, data)#type:ignore
-
+        UserConsumer.send_message(user.pk, data)  # type:ignore
 
 
 @shared_task()
@@ -36,9 +35,6 @@ def send_group_state_changed_to_users(group_id: int):
     for user in group.attendants.all():
         UserConsumer.send_group_message(user.pk)  # type:ignore
 
-
-@shared_task()
-def send_message_by_ws_to_user(user_id: int, message: dict):
 
 @shared_task()
 def delete_no_message_group(group_id):
