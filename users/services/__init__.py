@@ -73,7 +73,7 @@ class AuthService:
     def signin_kakao(cls, code: str, redirect_uri: str):
         resp = cls.get_kakao_user(code, redirect_uri)
         print(resp)
-        kakao_id, nickname = resp["id"] = resp["kakao_account"]["profile"]["nickname"]
+        kakao_id, nickname = resp["id"], resp["kakao_account"]["profile"]["nickname"]
         print(kakao_id, nickname)
         temp_email = kakao_id + "@" + "kakao.com"
         print(kakao_id, nickname)
