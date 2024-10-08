@@ -74,11 +74,8 @@ class AuthService:
     @atomic()
     def signin_kakao(cls, code: str, redirect_uri: str):
         resp = cls.get_kakao_user(code, redirect_uri)
-        print(resp)
         kakao_id, nickname = resp["id"], resp["kakao_account"]["profile"]["nickname"]
-        print(kakao_id, nickname)
         temp_email = str(kakao_id) + "@" + "kakao.com"
-        print(kakao_id, nickname, temp_email)
         if not (
             user := User.objects.filter(
                 third_party_integrations__provider_email=temp_email
@@ -87,7 +84,6 @@ class AuthService:
             user = User(
                 email=temp_email, username=f"kakao_{kakao_id}", nickname=nickname
             )
-            print(user)
             user.set_password(None)
             user.save()
             integration = ThirdPartyIntegration(
@@ -97,8 +93,6 @@ class AuthService:
                 user=user,
             )
             integration.save()
-            print(integration)
-        print(user)
         refresh = TokenS.get_token(user)
         access = str(refresh.access_token)
         return dict(refresh=str(refresh), access=access)
