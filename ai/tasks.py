@@ -76,7 +76,6 @@ def create_ai_post(post_id: int):
 
 @shared_task(queue="window")
 def _reply_to_users_post(chatbot_id: int, post_id: int):
-    print("rply")
     from posts.models import Post
     from posts.serializers import PostSerializer
     from posts.text_builder.block_text_builder import BlockTextBuilder
@@ -96,7 +95,6 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
 
     origin_documents = get_documents_from_posts(origins_data, chatbot)
     parent_documents = get_documents_from_posts([post], chatbot)
-    print(parent_documents)
     post_docs = [*origin_documents, *parent_documents]
 
     rag = Rag()
@@ -112,8 +110,6 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
     builder = BlockTextBuilder()
     for text in splitted:
         builder.text(text).new_line()
-    from pprint import pprint
-
     ser = PostSerializer(
         data=dict(
             text=builder.get_plain_text(),
