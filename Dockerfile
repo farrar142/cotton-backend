@@ -23,6 +23,9 @@ WORKDIR /app
 
 RUN apt-get update && apt-get -y install libpq-dev gcc g++ cmake
 RUN apt-get -y install git
+
+RUN apt-get install -y libgl1-mesa-glx
+RUN apt-get install -y libglib2.0-0
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 # Download dependencies as a separate step to take advantage of Docker's caching.
@@ -33,8 +36,6 @@ RUN apt-get -y install git
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
-RUN apt-get install -y libgl1-mesa-glx
-RUN apt-get install -y libglib2.0-0
 RUN pip uninstall channels daphne -y
 RUN pip install  channels["daphne"] 
 # Switch to the non-privileged user to run the application.

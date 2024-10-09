@@ -110,6 +110,8 @@ class TestAI(TestCase):
         self.assertEqual(bool(is_post_to_chatbot(post_id)), True)
         create_ai_post(post_id)
         p = Post.objects.last()
+        if not p:
+            raise
         create_ai_post(p.pk)
 
     def test_celery_queue(self):
@@ -133,9 +135,7 @@ class TestAI(TestCase):
             "https://www.huffpost.com/entry/lisa-marie-presley-dead-son-on-ice_n_670540ace4b00a4f9829b0e4",
             "https://www.huffpost.com/entry/frugal-deals-october-prime-day-2024_l_66faf561e4b06bc72dbbf228",
         ]
-        collection = rag.chroma.get_or_create_collection(collection_name)
-        results = collection.get()
-        rag.chroma.delete_collection(collection_name)
+        rag.truncate_collection(collection_name=collection_name)
 
         def save():
             # urls = get_news_urls("https://huffpost.com", icontain="/entry/")

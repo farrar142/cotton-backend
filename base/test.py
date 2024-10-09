@@ -89,6 +89,7 @@ class TestCase(TC):
         super().__init__(methodName)
 
     def setUp(self):
+        settings.DEBUG = True
         User = get_user_model()
         user = User(username="test", email="test@gmail.com", nickname="test")
         user.set_password("1234567890")

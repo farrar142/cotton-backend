@@ -7,7 +7,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import (
     SentenceTransformerEmbeddings,
 )
-from langchain_community.vectorstores import Chroma
+
+from langchain_chroma import Chroma
+
+# from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models.ollama import ChatOllama
 import requests
 
@@ -162,9 +165,9 @@ class Rag:
         chain = load_qa_chain(
             self.client, chain_type="stuff", verbose=True, prompt=prompt
         )
-        # matching_docs = db.similarity_search(query=query)
+        matching_docs = db.similarity_search(query=query)
         # chain.invoke()
         result = chain.invoke(
-            input=dict(input_documents=[*post_docs], question=query),
+            input=dict(input_documents=[*matching_docs, *post_docs], question=query),
         )
         return result["output_text"]
