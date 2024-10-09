@@ -65,7 +65,10 @@ def split_docs(documents: list[Document], chunk_size=1000, chunk_overlap=1000):
     return splitter.split_documents(documents)
 
 
-def get_news_urls(origin="https://news.naver.com/"):
+def get_news_urls(
+    origin="https://news.naver.com/",
+    icontain: str = "/article/",
+):
     response = requests.get(origin)
     html = response.text
     soup = bs4.BeautifulSoup(html, "html.parser")
@@ -73,32 +76,50 @@ def get_news_urls(origin="https://news.naver.com/"):
     return list(
         set(
             filter(
-                lambda x: "/article/" in x,
+                lambda x: icontain in x,
                 map(lambda x: str(x.get("href", "")), results),
             )
         )
     )
 
 
-def get_documents_from_urls(urls: list[str], limit: int = 10):
+def filter_existing_urls(urls: list[str], collection_name: str):
+    # 1. 존재하는 document의  metadata들을 가져옴
+    collection = chroma.get_collection(collection_name)
+    results = collection.get(where={"source": {"$in": urls}})  # type:ignore
+    # 2. 필터
+    existing_source = [
+        metadata.get("source") for metadata in (results.get("metadatas") or [])
+    ]
+    return list(set(urls).difference(existing_source))
+
+
+def get_documents_from_urls(
+    urls: list[str], limit: int = 10, tag: str = "article", id: str = "dic_area"
+):
 
     loader = WebBaseLoader(
-        web_paths=urls[:10],
-        bs_kwargs=dict(parse_only=bs4.SoupStrainer("article", {"id": "dic_area"})),
+        web_paths=urls[:limit],
+        bs_kwargs=dict(parse_only=bs4.SoupStrainer(tag, {"id": id})),
     )
     return loader.load()
 
 
+chatollama = ChatOllama(
+    model="llama3",
+)
+chatollama.base_url = os.getenv("OLLAMA_URL", "")
+chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
+embedding = SentenceTransformerEmbeddings(
+    model_name="all-MiniLM-l6-v2", model_kwargs=dict(device="cuda")
+)
+
+
 class Rag:
     def __init__(self):
-        self.client = ChatOllama(
-            model="llama3",
-        )
-        self.client.base_url = "http://host.docker.internal:11434"
-        self.chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
-        self.embedding = SentenceTransformerEmbeddings(
-            model_name="all-MiniLM-l6-v2", model_kwargs=dict(device="cuda")
-        )
+        self.client = chatollama
+        self.chroma = chroma
+        self.embedding = embedding
 
     def __save_documents_by_embbeding(
         self, documents: list[Document], collection_name: str
@@ -111,23 +132,21 @@ class Rag:
         )
         return db
 
-    def __get_chroma(self, collection_name: str):
+    def _get_chroma(self, collection_name: str):
 
         db = Chroma(
             collection_name, client=self.chroma, embedding_function=self.embedding
         )
         return db
 
-    def save_news_to_db(self, collection_name: str = "news"):
-        urls = get_news_urls()
-        documents = get_documents_from_urls(urls)
+    def save_news_to_db(self, documents: list[Document], collection_name: str = "news"):
         self.__save_documents_by_embbeding(documents, collection_name)
 
     def ask_llm(
         self, query: str, db: Chroma | None = None, collection_name: str = "news"
     ):
         if not db:
-            db = self.__get_chroma(collection_name=collection_name)
+            db = self._get_chroma(collection_name=collection_name)
         from langchain.chains.question_answering import load_qa_chain
 
         chain = load_qa_chain(

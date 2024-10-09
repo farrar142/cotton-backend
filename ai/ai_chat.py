@@ -14,7 +14,7 @@ def ai_chat(ai: User, post: dict, previous_post: list[dict] | None = None) -> st
         assistant = ChatCompletionAssistantMessageParam(
             role="assistant", content=json.dumps(previous_post)
         )
-    ollama = OpenAI(base_url=settings.OLLAMA_URL, api_key="ollama")
+    ollama = OpenAI(base_url=settings.OLLAMA_URL + "/v1", api_key="ollama")
     result = ollama.chat.completions.create(
         model="llama3",
         messages=[

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from django.db import models
+from django.utils.timezone import localtime
 from commons.celery import shared_task
 from users.models import User
 
@@ -104,3 +105,20 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
     )
     ser.is_valid(raise_exception=True)
     ser.save()
+
+
+from base.celery import app
+
+
+@shared_task(queue="window")
+def crawl_huffington_post():
+    from .rag import get_documents_from_urls, get_news_urls, filter_existing_urls, Rag
+
+    urls = get_news_urls("https://huffpost.com", icontain="/entry/")
+    filtered_urls = filter_existing_urls(urls, "huffington")
+    docs = get_documents_from_urls(filtered_urls, 10, tag="main", id="main")
+    now = localtime().isoformat()
+    for doc in docs:
+        doc.metadata.setdefault("created_at", now)
+    rag = Rag()
+    rag.save_news_to_db(docs, "huffington")

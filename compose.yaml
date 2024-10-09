@@ -19,13 +19,13 @@ services:
         start_period: 5s
     restart: on-failure
 
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 'all'
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 'all'
+              capabilities: [gpu]
   deploy:
     build: .
     container_name: cotton-backend
@@ -42,13 +42,6 @@ services:
         start_period: 5s
     restart: on-failure
 
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 'all'
-    #           capabilities: [gpu]
   celery:
     build: .
     container_name: cotton-celery
@@ -56,3 +49,26 @@ services:
     env_file:
       - ./.env
     restart: on-failure
+
+  beat:
+    build: .
+    container_name: cotton-celery-beat
+    entrypoint: sh beat.sh
+    env_file:
+      - ./.env
+    restart: on-failure
+
+  window-celery:
+    build: .
+    container_name: cotton-celery-window
+    entrypoint: sh celery.sh window
+    env_file:
+      - ./.env
+    restart: on-failure
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 'all'
+              capabilities: [gpu]

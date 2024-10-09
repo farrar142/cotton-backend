@@ -2,7 +2,7 @@ import os
 
 from django.conf import settings
 
-from celery import Celery
+from celery import Celery, schedules
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "base.settings")
 
@@ -13,5 +13,17 @@ app = Celery("base", broker=os.getenv("CACHE_HOST"), backend=os.getenv("CACHE_HO
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.config_from_object(f"django.conf:settings", namespace="CELERY")
+app.conf.update(
+    CELERY_BEAT_SCHEDULE={
+        "crawl_huffington": {
+            "task": "ai.tasks.crawl_huffington_post",
+            "schedule": schedules.crontab(
+                hour="*", minute="0"
+            ),  # 매시 정각에 실행되도록
+            "args": (),
+            "options": {"queue": "window"},
+        }
+    }
+)
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()

@@ -14,6 +14,7 @@ from datetime import timedelta
 from os import getenv
 from dotenv import load_dotenv
 from pathlib import Path
+from celery.schedules import crontab
 from .restframework_settings import *
 from .db import *
 from .email import *
@@ -174,6 +175,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 CELERY_ACCEPT_CONTENT = ["pickle", "json"]
 CELERY_TASK_SERIALIZER = "pickle"
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
