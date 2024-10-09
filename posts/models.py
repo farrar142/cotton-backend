@@ -19,7 +19,7 @@ class Post(CommonModel):
         "Post", on_delete=models.DO_NOTHING, related_name="quotes", null=True
     )
     depth = models.IntegerField(default=0)
-    text = models.TextField(max_length=1024)
+    text = models.TextField()
     blocks = models.JSONField(default=list)
     images: "models.ManyToManyField[Image,Post]" = models.ManyToManyField(Image)
 

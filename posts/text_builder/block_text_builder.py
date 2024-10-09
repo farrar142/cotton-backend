@@ -129,6 +129,8 @@ class BlockTextBuilder:
         for line in self.text_list:
             blocks: list[dict] = []
             for block in line:
+                if not block.value:
+                    continue
                 blocks.append(block.json())
             lines.append(blocks)
         return lines

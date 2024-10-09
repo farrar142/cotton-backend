@@ -15,6 +15,13 @@ from .ai_chat import ai_chat
 from .models import ChatBot
 from .tasks import is_post_to_chatbot, create_ai_post
 
+"""
+
+  1. 유저와의 대화기록을 벡터db에 저장.
+  2. 대화기록 벡터 db에서 유저의 게시글로 search후 document를 반환
+  3. 뉴스 벡터 db에서 유저의 게시글로 연관 documents를 반환
+"""
+
 
 class TestAI(TestCase):
     user: User
@@ -79,7 +86,7 @@ class TestAI(TestCase):
 
         cb = ChatBot.objects.create(user=self.user)
         builder = BlockTextBuilder()
-        builder.text("origin")
+        builder.text("what do you think about NASA's new Spaceship?")
         self.client.login(self.user)
         resp = self.client.post(
             "/posts/", dict(text=builder.get_plain_text(), blocks=builder.get_json())
@@ -100,7 +107,6 @@ class TestAI(TestCase):
         post_id = resp.json()["id"]
         self.assertEqual(bool(is_post_to_chatbot(post_id)), True)
         post = create_ai_post(post_id)
-        print(post)
 
     def test_celery_queue(self):
         rag = Rag()

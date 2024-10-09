@@ -1,5 +1,6 @@
 import hashlib
 from random import shuffle
+from typing import TYPE_CHECKING
 import chromadb, os, bs4
 from langchain_core.documents import Document
 from langchain_community.document_loaders import CSVLoader, TextLoader, WebBaseLoader
@@ -11,8 +12,16 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models.ollama import ChatOllama
 import requests
 
-from .generate_prompt_template import generate_prompt_template
+from .generate_prompt_template import (
+    generate_prompt_template,
+    generate_reply_prompt_template,
+)
+from .loader import PostLoader
 import torch
+
+if TYPE_CHECKING:
+    from users.models import User
+    from posts.models import Post
 
 torch.multiprocessing.set_start_method("spawn")
 
@@ -57,6 +66,11 @@ def filter_existing_urls(urls: list[str], collection_name: str):
         metadata.get("source") for metadata in (results.get("metadatas") or [])
     ]
     return list(set(urls).difference(existing_source))
+
+
+def get_documents_from_posts(posts: "list[Post]", user: "User"):
+    loader = PostLoader(posts=posts, user=user)
+    return loader.load()
 
 
 def get_documents_from_urls(
@@ -113,10 +127,11 @@ class Rag:
 
     def ask_llm(
         self, query: str, db: Chroma | None = None, collection_name: str = "news"
-    ):
+    ) -> str:
+        from langchain.chains.question_answering import load_qa_chain
+
         if not db:
             db = self._get_chroma(collection_name=collection_name)
-        from langchain.chains.question_answering import load_qa_chain
 
         ""
         prompt = generate_prompt_template().get_prompt(self.client)
@@ -128,3 +143,20 @@ class Rag:
         )
         matching_docs = db.similarity_search(query=query)
         return chain.run(input_documents=matching_docs, question=query)
+
+    def create_reply(
+        self,
+        chatbot: "User",
+        query: str,
+        post_docs: list[Document],
+        collection_name: str = "huffington",
+    ) -> str:
+        from langchain.chains.question_answering import load_qa_chain
+
+        db = self._get_chroma(collection_name=collection_name)
+        prompt = generate_reply_prompt_template(chatbot).get_prompt(self.client)
+        chain = load_qa_chain(
+            self.client, chain_type="stuff", verbose=False, prompt=prompt
+        )
+        matching_docs = db.similarity_search(query=query)
+        return chain.run(input_documents=[*post_docs, *matching_docs], question=query)

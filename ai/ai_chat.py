@@ -8,6 +8,7 @@ from django.conf import settings
 from users.models import User
 
 
+# deprecated
 def ai_chat(ai: User, post: dict, previous_post: list[dict] | None = None) -> str:
     assistant = ChatCompletionAssistantMessageParam(role="assistant", content="")
     if previous_post:

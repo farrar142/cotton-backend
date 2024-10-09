@@ -74,32 +74,44 @@ def create_ai_post(post_id: int):
         _reply_to_users_post.delay(chatbot_id=bot_id, post_id=post.pk)
 
 
-@shared_task()
+@shared_task(queue="window")
 def _reply_to_users_post(chatbot_id: int, post_id: int):
     from posts.models import Post
     from posts.serializers import PostSerializer
     from posts.text_builder.block_text_builder import BlockTextBuilder
-    from .ai_chat import ai_chat
+    from .rag import Rag, get_documents_from_posts
 
-    user = User.objects.get(pk=chatbot_id)
-    post = Post.concrete_queryset(user).get(pk=post_id)
-    origins_data = []
+    chatbot = User.objects.get(pk=chatbot_id)
+    post = Post.concrete_queryset(chatbot).get(pk=post_id)
+    origins_data: list[Post] = []
     if post.origin:
         origins = (
-            Post.concrete_queryset(user)
+            Post.concrete_queryset(chatbot)
             .filter(origin=post.origin)
             .exclude(pk=post_id)
             .order_by("-created_at")[:10]
         )
-        origins_data: list[dict] = PostSerializer(
-            reversed(origins), many=True, user=user
-        ).data  # type:ignore
-    data: dict = PostSerializer(instance=post).data  # type:ignore
-    content = ai_chat(user, data, origins_data)
+        origins_data = list(reversed(origins))
+
+    origin_documents = get_documents_from_posts(origins_data, chatbot)
+    parent_documents = get_documents_from_posts([post], chatbot)
+    post_docs = [*origin_documents, *parent_documents]
+
+    rag = Rag()
+    content = rag.create_reply(
+        chatbot=chatbot,
+        query=post.text,
+        post_docs=post_docs,
+        collection_name="huffington",
+    )
+    # content = ai_chat(chatbot, data, origins_data)
+
     splitted = content.split("\n")
     builder = BlockTextBuilder()
     for text in splitted:
         builder.text(text).new_line()
+    from pprint import pprint
+
     ser = PostSerializer(
         data=dict(
             text=builder.get_plain_text(),
@@ -107,7 +119,7 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
             parent=post.pk,
             origin=post.origin.pk if post.origin else post.pk,
         ),
-        user=user,
+        user=chatbot,
     )
     ser.is_valid(raise_exception=True)
     ser.save()
