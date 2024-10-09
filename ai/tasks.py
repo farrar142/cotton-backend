@@ -71,7 +71,7 @@ def create_ai_post(post_id: int):
         return
     bots = parse_ai_users(post)
     for bot_id, post in bots.items():
-        _reply_to_users_post(chatbot_id=bot_id, post_id=post.pk)
+        _reply_to_users_post.delay(chatbot_id=bot_id, post_id=post.pk)
 
 
 @shared_task(queue="window")
