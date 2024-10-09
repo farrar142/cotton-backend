@@ -179,7 +179,7 @@ class TestAI(TestCase):
         ]
         collection = rag.chroma.get_or_create_collection(collection_name)
         results = collection.get()
-        collection.delete(results.get("ids"))
+        rag.chroma.delete_collection(collection_name)
 
         def save():
             # urls = get_news_urls("https://huffpost.com", icontain="/entry/")
@@ -191,6 +191,7 @@ class TestAI(TestCase):
 
         save()
 
+        collection = rag.chroma.get_or_create_collection(collection_name)
         results = collection.get()
         docs = results.get("documents")
         if not docs:
