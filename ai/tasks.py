@@ -82,9 +82,9 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
         origins = (
             Post.concrete_queryset(user)
             .filter(origin=post.origin)
+            .exclude(pk=post_id)
             .order_by("-created_at")[:10]
         )
-        print(origins)
         origins_data: list[dict] = PostSerializer(
             reversed(origins), many=True, user=user
         ).data  # type:ignore
