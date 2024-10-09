@@ -68,6 +68,8 @@ class User(UserAbstract):
     following_at = make_property_field(None)
     followed_by_at = make_property_field(None)
 
+    is_chat_bot = make_property_field(False)
+
     @classmethod
     def get_following_model(cls) -> "Follow":
         from pprint import pprint as pp
@@ -91,6 +93,7 @@ class User(UserAbstract):
                 is_mutual_follow=cls.get_is_mutual_follow(),
                 following_at=cls.get_following_at(user=user),
                 followed_by_at=cls.get_followed_by_at(user=user),
+                is_chat_bot=models.Q(chatbots__isnull=False),
             )
         )
 

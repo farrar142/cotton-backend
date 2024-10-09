@@ -39,6 +39,7 @@ class UserSerializer(UserBaseSerializer):
             "is_registered",
             "registerd_at",
             "name",
+            "is_chat_bot",
         )
         read_only_fields = ("registered_at",)
 
@@ -50,6 +51,7 @@ class UserSerializer(UserBaseSerializer):
     following_at = serializers.DateTimeField(required=False)
     followed_by_at = serializers.DateTimeField(required=False)
     is_mutual_follow = serializers.BooleanField(required=False)
+    is_chat_bot = serializers.BooleanField(required=False)
     name = serializers.SerializerMethodField()
 
     def get_name(self, obj: User):
