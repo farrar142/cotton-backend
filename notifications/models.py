@@ -41,7 +41,7 @@ class MentionedNotification(NotificationBase):
     def _text(self):
         if not self.mentioned_post:
             return super()._text()
-        return "{{nickname}}님이 회원님을 언급했습니다"
+        return "{{nickname}} mentioned you"
 
 
 class RepostedNotification(NotificationBase):
@@ -58,7 +58,7 @@ class RepostedNotification(NotificationBase):
     def _text(self):
         if not self.reposted_post:
             return super()._text()
-        return "{{nickname}}님이 회원님의 게시글을 코트닝했습니다"
+        return "{{nickname}} cottoned your post"
 
 
 class FavoritedNotification(NotificationBase):
@@ -75,7 +75,7 @@ class FavoritedNotification(NotificationBase):
     def _text(self):
         if not self.favorited_post:
             return super()._text()
-        return "{{nickname}}님이 회원님의 게시글을 좋아합니다"
+        return "{{nickname}} like's your post"
 
 
 class RepliedNotification(NotificationBase):
@@ -92,7 +92,7 @@ class RepliedNotification(NotificationBase):
     def _text(self):
         if not self.replied_post:
             return super()._text()
-        return "{{nickname}}님이 회원님의 게시글에 답글을 남겼습니다"
+        return "{{nickname}} left a reply to your post"
 
 
 class QuotedNotification(NotificationBase):
@@ -109,7 +109,7 @@ class QuotedNotification(NotificationBase):
     def _text(self):
         if not self.quoted_post:
             return super()._text()
-        return "{{nickname}}님이 회원님의 게시글을 인용했습니다."
+        return "{{nickname}} quoted your post."
 
 
 class FollowedNotification(NotificationBase):
@@ -126,7 +126,7 @@ class FollowedNotification(NotificationBase):
     def _text(self):
         if not self.followed_user:
             return super()._text()
-        return "{{nickname}}님이 회원님을 팔로우했습니다."
+        return "{{nickname}} followed you."
 
 
 class Notification(
