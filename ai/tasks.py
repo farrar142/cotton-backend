@@ -8,8 +8,6 @@ from commons.celery import shared_task
 from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.serializers import PostSerializer
-from .rag import Rag
-from .rag.combined import _crawl_huffinton_post
 
 if TYPE_CHECKING:
     from posts.models import Post
@@ -121,6 +119,8 @@ from base.celery import app
 @shared_task(queue="window")
 def crawl_huffington_post():
 
+    from .rag.combined import _crawl_huffinton_post
+
     _crawl_huffinton_post()
 
 
@@ -139,6 +139,8 @@ def chatbots_post_about_news():
 
 @shared_task(queue="window")
 def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
+    from .rag import Rag
+
     user = User.objects.filter(pk=user_id).first()
     if not user:
         return
