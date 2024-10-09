@@ -1,4 +1,3 @@
-import hashlib
 from random import shuffle
 from typing import TYPE_CHECKING
 import chromadb, os, bs4
@@ -24,10 +23,6 @@ if TYPE_CHECKING:
     from posts.models import Post
 
 torch.multiprocessing.set_start_method("spawn")
-
-
-def get_hash(string: str):
-    return hashlib.md5(string.encode()).hexdigest()
 
 
 def split_docs(documents: list[Document], chunk_size=1000, chunk_overlap=1000):
@@ -85,7 +80,7 @@ def get_documents_from_urls(
 
 
 chatollama = ChatOllama(
-    model="llama3",
+    model="lumimaid",
 )
 chatollama.base_url = os.getenv("OLLAMA_URL", "")
 chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
@@ -126,7 +121,11 @@ class Rag:
         self.chroma.delete_collection(collection_name)
 
     def ask_llm(
-        self, query: str, db: Chroma | None = None, collection_name: str = "news"
+        self,
+        chatbot: "User",
+        query: str,
+        db: Chroma | None = None,
+        collection_name: str = "news",
     ) -> str:
         from langchain.chains.question_answering import load_qa_chain
 
@@ -134,19 +133,24 @@ class Rag:
             db = self._get_chroma(collection_name=collection_name)
 
         ""
-        prompt = generate_prompt_template().get_prompt(self.client)
+        prompt = generate_prompt_template(chatbot).get_prompt(self.client)
         chain = load_qa_chain(
             self.client,
             chain_type="stuff",
-            verbose=False,
+            verbose=True,
             prompt=prompt,
         )
         matching_docs = db.similarity_search(query=query)
-        return chain.run(input_documents=matching_docs, question=query)
+
+        result = chain.invoke(
+            input=dict(input_documents=matching_docs, question=query),
+        )
+        return result["output_text"]
 
     def create_reply(
         self,
         chatbot: "User",
+        user: "User",
         query: str,
         post_docs: list[Document],
         collection_name: str = "huffington",
@@ -154,9 +158,13 @@ class Rag:
         from langchain.chains.question_answering import load_qa_chain
 
         db = self._get_chroma(collection_name=collection_name)
-        prompt = generate_reply_prompt_template(chatbot).get_prompt(self.client)
+        prompt = generate_reply_prompt_template(chatbot, user).get_prompt(self.client)
         chain = load_qa_chain(
-            self.client, chain_type="stuff", verbose=False, prompt=prompt
+            self.client, chain_type="stuff", verbose=True, prompt=prompt
         )
-        matching_docs = db.similarity_search(query=query)
-        return chain.run(input_documents=[*post_docs, *matching_docs], question=query)
+        # matching_docs = db.similarity_search(query=query)
+        # chain.invoke()
+        result = chain.invoke(
+            input=dict(input_documents=[*post_docs], question=query),
+        )
+        return result["output_text"]

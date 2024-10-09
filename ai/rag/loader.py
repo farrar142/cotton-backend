@@ -30,7 +30,19 @@ class PostLoader(BaseLoader):
 
         return [
             Document(
-                page_content=f"nickname:{item.user.nickname},content:{item.text}",
+                page_content="""{{
+                    post_id: {post_id},
+                    parent_post_id: {parent_id},
+                    nickname: {nickname},
+                    content: {content},
+                    created_at: {created_at}',
+                    }}""".format(
+                    post_id=item.pk,
+                    parent_id=item.parent.pk if item.parent else None,
+                    nickname=item.user.nickname,
+                    content=item.text,
+                    created_at=item.created_at.isoformat(),
+                ),
                 metadata=_build_metadata(item),
             )
             for item in self.items

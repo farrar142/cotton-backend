@@ -87,25 +87,25 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
     if post.origin:
         origins = (
             Post.concrete_queryset(chatbot)
-            .filter(origin=post.origin)
+            .filter(models.Q(origin=post.origin) | models.Q(pk=post.origin.pk))
             .exclude(pk=post_id)
             .order_by("-created_at")[:10]
         )
         origins_data = list(reversed(origins))
 
     origin_documents = get_documents_from_posts(origins_data, chatbot)
-    parent_documents = get_documents_from_posts([post], chatbot)
-    post_docs = [*origin_documents, *parent_documents]
+    # parent_documents = get_documents_from_posts([post], chatbot)
+    post_docs = [*origin_documents]
 
     rag = Rag()
     content = rag.create_reply(
         chatbot=chatbot,
+        user=post.user,
         query=post.text,
         post_docs=post_docs,
         collection_name="huffington",
     )
     # content = ai_chat(chatbot, data, origins_data)
-
     splitted = content.split("\n")
     builder = BlockTextBuilder()
     for text in splitted:
@@ -156,7 +156,8 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
         return
     rag = Rag()
     resp: str = rag.ask_llm(
-        "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
+        user,
+        "Summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
         collection_name=collection_name,
     )
     splitted = resp.split("\n")

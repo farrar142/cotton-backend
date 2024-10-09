@@ -12,94 +12,86 @@ if TYPE_CHECKING:
     from users.models import User
 
 
-def generate_prompt_template():
-    prompt_template = """
-    You have to make sns post, within the context given below.
-    
-    Just give me a post, without additional explanation
+def chatbot_define_prompt(user: "User"):
+    return f"Your name is {user.nickname}.\n"
 
-    If you don't know the answer, don't try to answer, just say you don't know.
 
-    you can use only under 200 characters.
-    
-    Hide you are an AI.
-    
-    {context}
+def user_define_prompt(user: "User"):
+    return f"Now you are talking with {user.nickname}"
 
-    question: {question}
-    kindly answer:"""
-    PROMPT = PromptTemplate(
-        template=prompt_template, input_variables=["context", "question"]
+
+def generic_prompt(user: "User"):
+    return (
+        chatbot_define_prompt(user)
+        + "If you don't know the answer, don't try to answer, just say you don't know.\nyou can use only under 200 characters.\nHide you are an AI.\n"
     )
 
-    system_template = """
-    You have to make sns post, within the context given below.
-    
-    Just give me a post, without additional explanation
 
-    If you don't know the answer, don't try to answer, just say you don't know.
-    
-    you can use only under 200 characters.
-    
-    Hide you are an AI.
-    ----------------
-    {context}"""
+def generate_prompt_template(user: "User"):
+    def get_default_prompt():
+        prompt_template = (
+            generic_prompt(user)
+            + """----------------
+        {context}
 
-    messages = [
-        SystemMessagePromptTemplate.from_template(system_template),
-        HumanMessagePromptTemplate.from_template("{question}"),
-    ]
-    CHAT_PROMPT = ChatPromptTemplate.from_messages(messages)
+        question: {question}
+        kindly answer:"""
+        )
+        return PromptTemplate(
+            template=prompt_template, input_variables=["context", "question"]
+        )
+
+    def get_chat_prompt():
+        system_template = (
+            generic_prompt(user)
+            + """----------------
+        {context}"""
+        )
+
+        messages = [
+            SystemMessagePromptTemplate.from_template(system_template),
+            HumanMessagePromptTemplate.from_template("{question}"),
+        ]
+        return ChatPromptTemplate.from_messages(messages)
 
     PROMPT_SELECTOR = ConditionalPromptSelector(
-        default_prompt=PROMPT, conditionals=[(is_chat_model, CHAT_PROMPT)]
+        default_prompt=get_default_prompt(),
+        conditionals=[(is_chat_model, get_chat_prompt())],
     )
     return PROMPT_SELECTOR
 
 
-def generate_reply_prompt_template(user: "User"):
-    user_define_prompt = f"Your name is {user.nickname}.\n"
-    prompt_template = (
-        user_define_prompt
-        + """
-    
-    You have to reply to user's sns post, within the context given below.
+def generate_reply_prompt_template(chatbot: "User", user: "User"):
+    def get_default_prompt():
+        prompt_template = (
+            generic_prompt(chatbot)
+            + user_define_prompt(user)
+            + """---------------
+        {context}
 
-    If you don't know the answer, don't try to answer, just say you don't know.
+        question: {question}
+        reply:"""
+        )
+        return PromptTemplate(
+            template=prompt_template, input_variables=["context", "question"]
+        )
 
-    you can use only under 200 characters.
-    
-    Hide you are an AI.
-    {context}
+    def get_chat_prompt():
+        system_template = (
+            generic_prompt(chatbot)
+            + user_define_prompt(user)
+            + """----------------
+        {context}"""
+        )
 
-    question: {question}
-    reply:"""
-    )
-    PROMPT = PromptTemplate(
-        template=prompt_template, input_variables=["context", "question"]
-    )
-
-    system_template = (
-        user_define_prompt
-        + """
-    You have to reply to user's sns post, within the context given below.
-
-    If you don't know the answer, don't try to answer, just say you don't know.
-
-    you can use only under 200 characters.
-    
-    Hide you are an AI.
-    ----------------
-    {context}"""
-    )
-
-    messages = [
-        SystemMessagePromptTemplate.from_template(system_template),
-        HumanMessagePromptTemplate.from_template("{question}"),
-    ]
-    CHAT_PROMPT = ChatPromptTemplate.from_messages(messages)
+        messages = [
+            SystemMessagePromptTemplate.from_template(system_template),
+            HumanMessagePromptTemplate.from_template("{question}"),
+        ]
+        return ChatPromptTemplate.from_messages(messages)
 
     PROMPT_SELECTOR = ConditionalPromptSelector(
-        default_prompt=PROMPT, conditionals=[(is_chat_model, CHAT_PROMPT)]
+        default_prompt=get_default_prompt(),
+        conditionals=[(is_chat_model, get_chat_prompt())],
     )
     return PROMPT_SELECTOR

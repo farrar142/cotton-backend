@@ -62,6 +62,8 @@ services:
     build: .
     container_name: cotton-celery-window
     entrypoint: sh celery.sh window
+    volumes:
+      - window-celery:/root/.cache
     env_file:
       - ./.env
     restart: on-failure
@@ -72,3 +74,7 @@ services:
             - driver: nvidia
               count: 'all'
               capabilities: [gpu]
+
+volumes:
+  window-celery:
+   
