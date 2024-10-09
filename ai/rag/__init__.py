@@ -1,57 +1,17 @@
-from openai import OpenAI
 import hashlib
-import chromadb, os, redis, bs4
+from random import shuffle
+import chromadb, os, bs4
 from langchain_core.documents import Document
 from langchain_community.document_loaders import CSVLoader, TextLoader, WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import (
     SentenceTransformerEmbeddings,
-    OpenAIEmbeddings,
 )
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models.ollama import ChatOllama
-from langchain.prompts import (
-    SystemMessagePromptTemplate,
-    ChatPromptTemplate,
-    BasePromptTemplate,
-    PromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.chains.prompt_selector import ConditionalPromptSelector, is_chat_model
-import redis.client
 import requests
 
-from django.conf import settings
-
-
-prompt_template = """아래에 주어진 컨텍스트 내에서, 질문에 대해 한국어로 친절하게 답해줘.
-
-만약에 답을 모르겠으면,답을 하려하지 말고 그냥 모른다고 답해줘. 
-
-{context}
-
-질문: {question}
-친절한 대답:"""
-PROMPT = PromptTemplate(
-    template=prompt_template, input_variables=["context", "question"]
-)
-
-system_template = """아래에 주어진 컨텍스트 내에서, 질문에 대해 한국어로 친절하게 답해줘.
-
-만약에 답을 모르겠으면,답을 하려하지 말고 그냥 모른다고 답해줘. 
-----------------
-{context}"""
-
-messages = [
-    SystemMessagePromptTemplate.from_template(system_template),
-    HumanMessagePromptTemplate.from_template("{question}"),
-]
-CHAT_PROMPT = ChatPromptTemplate.from_messages(messages)
-
-
-PROMPT_SELECTOR = ConditionalPromptSelector(
-    default_prompt=PROMPT, conditionals=[(is_chat_model, CHAT_PROMPT)]
-)
+from .generate_prompt_template import generate_prompt_template
 
 
 def get_hash(string: str):
@@ -73,7 +33,7 @@ def get_news_urls(
     html = response.text
     soup = bs4.BeautifulSoup(html, "html.parser")
     results = soup.select("a")
-    return list(
+    urls = list(
         set(
             filter(
                 lambda x: icontain in x,
@@ -81,6 +41,8 @@ def get_news_urls(
             )
         )
     )
+    shuffle(urls)
+    return urls
 
 
 def filter_existing_urls(urls: list[str], collection_name: str):
@@ -142,6 +104,10 @@ class Rag:
     def save_news_to_db(self, documents: list[Document], collection_name: str = "news"):
         self.__save_documents_by_embbeding(documents, collection_name)
 
+    def truncate_collection(self, collection_name: str):
+        self.chroma.get_or_create_collection(collection_name)
+        self.chroma.delete_collection(collection_name)
+
     def ask_llm(
         self, query: str, db: Chroma | None = None, collection_name: str = "news"
     ):
@@ -149,11 +115,12 @@ class Rag:
             db = self._get_chroma(collection_name=collection_name)
         from langchain.chains.question_answering import load_qa_chain
 
+        prompt = generate_prompt_template().get_prompt(self.client)
         chain = load_qa_chain(
             self.client,
             chain_type="stuff",
-            verbose=True,
-            prompt=PROMPT_SELECTOR.get_prompt(self.client),
+            verbose=False,
+            prompt=prompt,
         )
         matching_docs = db.similarity_search(query=query)
         return chain.run(input_documents=matching_docs, question=query)

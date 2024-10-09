@@ -22,7 +22,13 @@ app.conf.update(
             ),  # 매시 정각에 실행되도록
             "args": (),
             "options": {"queue": "window"},
-        }
+        },
+        "chatbots_post": {
+            "task": "ai.tasks.chatbots_post_about_news",
+            "schedule": schedules.crontab(minutes="*/10"),
+            "args": (),
+            "options": {"queue": "window"},
+        },
     }
 )
 # Load task modules from all registered Django apps.

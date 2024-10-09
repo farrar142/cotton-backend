@@ -1,8 +1,15 @@
+from random import randint
 from typing import TYPE_CHECKING
+
 from django.db import models
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime, timedelta
+
 from commons.celery import shared_task
 from users.models import User
+from posts.text_builder.block_text_builder import BlockTextBuilder
+from posts.serializers import PostSerializer
+from .rag import Rag
+from .rag.combined import _crawl_huffinton_post
 
 if TYPE_CHECKING:
     from posts.models import Post
@@ -66,11 +73,11 @@ def create_ai_post(post_id: int):
         return
     bots = parse_ai_users(post)
     for bot_id, post in bots.items():
-        reply_to_users_post.delay(chatbot_id=bot_id, post_id=post.pk)
+        _reply_to_users_post.delay(chatbot_id=bot_id, post_id=post.pk)
 
 
 @shared_task()
-def reply_to_users_post(chatbot_id: int, post_id: int):
+def _reply_to_users_post(chatbot_id: int, post_id: int):
     from posts.models import Post
     from posts.serializers import PostSerializer
     from posts.text_builder.block_text_builder import BlockTextBuilder
@@ -91,8 +98,10 @@ def reply_to_users_post(chatbot_id: int, post_id: int):
         ).data  # type:ignore
     data: dict = PostSerializer(instance=post).data  # type:ignore
     content = ai_chat(user, data, origins_data)
+    splitted = content.split("\n")
     builder = BlockTextBuilder()
-    builder.text(content)
+    for text in splitted:
+        builder.text(text).new_line()
     ser = PostSerializer(
         data=dict(
             text=builder.get_plain_text(),
@@ -111,13 +120,46 @@ from base.celery import app
 
 @shared_task(queue="window")
 def crawl_huffington_post():
-    from .rag import get_documents_from_urls, get_news_urls, filter_existing_urls, Rag
 
-    urls = get_news_urls("https://huffpost.com", icontain="/entry/")
-    filtered_urls = filter_existing_urls(urls, "huffington")
-    docs = get_documents_from_urls(filtered_urls, 10, tag="main", id="main")
-    now = localtime().isoformat()
-    for doc in docs:
-        doc.metadata.setdefault("created_at", now)
+    _crawl_huffinton_post()
+
+
+@shared_task(queue="window")
+def chatbots_post_about_news():
+    # 10분마다 한번 호출
+    users = User.objects.filter(chatbots__isnull=False)
+    for user in users:
+        minute = randint(1, 20)
+        if 10 < minute:
+            continue
+        _chatbot_post_about_news.apply_async(
+            args=[user.pk], eta=timedelta(minutes=minute)
+        )
+
+
+@shared_task(queue="window")
+def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
+    user = User.objects.filter(pk=user_id).first()
+    if not user:
+        return
     rag = Rag()
-    rag.save_news_to_db(docs, "huffington")
+    resp: str = rag.ask_llm(
+        "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
+        collection_name=collection_name,
+    )
+    splitted = resp.split("\n")
+
+    builder = BlockTextBuilder()
+    for text in splitted:
+        builder.text(text).new_line()
+
+    ser = PostSerializer(
+        data=dict(
+            text=builder.get_plain_text(),
+            blocks=builder.get_json(),
+        ),
+        user=user,
+    )
+    if not ser.is_valid():
+        return
+    ser.save()

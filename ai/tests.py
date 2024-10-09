@@ -21,61 +21,7 @@ class TestAI(TestCase):
     user2: User
     user3: User
 
-    def test_rag(self):
-        frank = User.objects.create(
-            username="frank",
-            nickname="frank",
-            email="frank@gmail.com",
-            password="123456",
-        )
-
-        misha = User.objects.create(
-            username="misha",
-            nickname="misha",
-            email="misha@gmail.com",
-            password="123456",
-        )
-
-        builder = BlockTextBuilder()
-        builder.text(f"Hey {misha.nickname}, i'm so tired")
-
-        self.client.login(frank)
-        resp = self.client.post(
-            "/posts/", dict(text=builder.get_plain_text(), blocks=builder.get_json())
-        )
-        self.assertEqual(resp.status_code, 201)
-
-        content = ai_chat(misha, resp.json())
-        builder = BlockTextBuilder()
-        builder.text(content or "")
-
-        self.client.login(misha)
-        resp = self.client.post(
-            "/posts/",
-            dict(
-                text=builder.get_plain_text(),
-                blocks=builder.get_json(),
-                origin=resp.json()["id"],
-                parent=resp.json()["id"],
-            ),
-        )
-        self.assertEqual(resp.status_code, 201)
-        print(resp.json()["text"])
-
-        prev = self.client.get("/posts/", dict(origin=resp.json()["id"]))
-
-        content = ai_chat(frank, resp.json(), prev.json()["results"])
-        builder = BlockTextBuilder()
-        builder.text(content or "")
-
-        self.client.login(frank)
-        resp = self.client.post(
-            "/posts/", dict(text=builder.get_plain_text(), blocks=builder.get_json())
-        )
-        self.assertEqual(resp.status_code, 201)
-        print(resp.json()["text"])
-
-    def test_post_to_ai(self):
+    def test_is_post_to_ai(self):
         cb = ChatBot.objects.create(user=self.user)
         builder = BlockTextBuilder()
         builder.text("origin")
@@ -207,3 +153,38 @@ class TestAI(TestCase):
             self.assertEqual(True, False)
             return
         self.assertEqual(docs.__len__(), 11)
+
+    def test_ai_tweet_auto(self):
+        collection_name = "huff-test"
+        rag = Rag()
+        rag.truncate_collection(collection_name)
+        from posts.serializers import PostSerializer
+        from .rag.combined import _crawl_huffinton_post
+
+        _crawl_huffinton_post(collection_name)
+
+        resp: str = rag.ask_llm(
+            "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
+            collection_name=collection_name,
+        )
+
+        builder = BlockTextBuilder()
+        splitted = resp.split("\n")
+        for text in splitted:
+            builder.text(text)
+        ser = PostSerializer(
+            data=dict(
+                text=builder.get_plain_text(),
+                blocks=builder.get_json(),
+            ),
+            user=self.user,
+        )
+        if not ser.is_valid():
+            return
+        ser.save()
+        print(ser.instance)
+
+    def test_is_chatbot(self):
+        ChatBot.objects.create(user=self.user)
+        users = User.objects.filter(chatbots__isnull=False)
+        self.assertEqual(users.count(), 1)
