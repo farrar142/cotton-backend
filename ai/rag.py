@@ -85,7 +85,7 @@ def get_news_urls(
 
 def filter_existing_urls(urls: list[str], collection_name: str):
     # 1. 존재하는 document의  metadata들을 가져옴
-    collection = chroma.get_collection(collection_name)
+    collection = chroma.get_or_create_collection(collection_name)
     results = collection.get(where={"source": {"$in": urls}})  # type:ignore
     # 2. 필터
     existing_source = [

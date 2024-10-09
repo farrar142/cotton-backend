@@ -163,6 +163,7 @@ class TestAI(TestCase):
         2. 컬렉션에 덮어쓰기 하면안됨
         3. 중복된 소스들은 저장하지 말아야됨
         """
+        collection_name = "huff-test"
         d_urls = [
             "https://www.huffpost.com/entry/scott-perry-project-2025_n_670416f6e4b0f65b8775e550",
             "https://www.huffpost.com/entry/trisha-yearwood-garth-brooks-alleged-assault_n_67059ec1e4b09945d6b87df6",
@@ -176,18 +177,17 @@ class TestAI(TestCase):
             "https://www.huffpost.com/entry/lisa-marie-presley-dead-son-on-ice_n_670540ace4b00a4f9829b0e4",
             "https://www.huffpost.com/entry/frugal-deals-october-prime-day-2024_l_66faf561e4b06bc72dbbf228",
         ]
-
-        collection = rag.chroma.get_collection("huffington")
+        collection = rag.chroma.get_or_create_collection(collection_name)
         results = collection.get()
         collection.delete(results.get("ids"))
 
         def save():
             # urls = get_news_urls("https://huffpost.com", icontain="/entry/")
-            urls = filter_existing_urls(d_urls, "huffington")
+            urls = filter_existing_urls(d_urls, collection_name)
             docs = get_documents_from_urls(urls, 10, tag="main", id="main")
             for doc in docs:
                 doc.metadata.setdefault("created_at", localtime().isoformat())
-            rag.save_news_to_db(docs, "huffington")
+            rag.save_news_to_db(docs, collection_name)
 
         save()
 
