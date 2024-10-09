@@ -1,1 +1,1 @@
-celery -A base -B --loglevel=INFO -Q celery
+celery -A base -B --loglevel=INFO
