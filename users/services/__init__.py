@@ -102,11 +102,9 @@ class AuthService:
     @classmethod
     def signin(cls, email: str, password: str):
         if not (user := User.objects.filter(email=email).first()):
-            raise exceptions.NotFound(dict(email=["존재하지 않는 이메일입니다."]))
+            raise exceptions.NotFound(dict(email=["Email Not Found"]))
         if not user.check_password(password):
-            raise exceptions.AuthenticationFailed(
-                dict(password=["패스워드가 틀립니다."])
-            )
+            raise exceptions.AuthenticationFailed(dict(password=["Wrong Password"]))
         refresh = TokenS.get_token(user)
         access = str(refresh.access_token)  # type:ignore
         return dict(refresh=str(refresh), access=access)
@@ -118,9 +116,7 @@ class AuthService:
             return dict(access=str(token.access_token), refresh=str(token))
         except:
             exception = exceptions.APIException()
-            exception.detail = dict(
-                detail="이 토큰은 유효기간이 만료되었습니다", code="invalid_token"
-            )
+            exception.detail = dict(detail=["expired token"], code="invalid_token")
             exception.status_code = 400
             raise exception
 
@@ -136,18 +132,14 @@ class AuthService:
 
         with with_lock(f"signup:{email}"):
             if User.objects.filter(email=email).first():
-                raise exceptions.ValidationError(
-                    dict(email=["이미 존재하는 이메일입니다."])
-                )
+                raise exceptions.ValidationError(dict(email=["Duplicated Email"]))
             if User.objects.filter(username=username).first():
-                raise exceptions.ValidationError(
-                    dict(username=["이미 존재하는 유저이름입니다."])
-                )
+                raise exceptions.ValidationError(dict(username=["Duplicated Username"]))
             if password != password2:
                 raise exceptions.ValidationError(
                     dict(
-                        password=["패스워드가 일치하지 않습니다"],
-                        password2=["패스워드가 일치하지 않습니다"],
+                        password=["Password not matched"],
+                        password2=["Password not matched"],
                     )
                 )
             user = User().objects.create_user(
@@ -169,13 +161,11 @@ class AuthService:
         cache_key = f"register:{code_key}"
         user_id = cache.get(cache_key, None)
         if not user_id:
-            raise exceptions.ValidationError(dict(code_key=["존재하지 않는 키입니다."]))
+            raise exceptions.ValidationError(dict(code_key=["Key not found"]))
         cache.delete(cache_key)
         user = User.objects.filter(pk=user_id).first()
         if not user:
-            raise exceptions.ValidationError(
-                dict(code_key=["존재하지 않는 유저입니다."])
-            )
+            raise exceptions.ValidationError(dict(code_key=["User not found"]))
         user.is_registered = True
         user.registered_at = localtime()
         user.save()
