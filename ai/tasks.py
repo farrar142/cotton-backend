@@ -130,6 +130,7 @@ def chatbots_post_about_news():
     users = User.objects.filter(chatbots__isnull=False)
     for user in users:
         minute = randint(1, 20)
+        print(f"{minute=} after post")
         if 10 < minute:
             continue
         _chatbot_post_about_news.apply_async(
