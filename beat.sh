@@ -1,1 +1,1 @@
-celery -A base worker -B --loglevel=INFO
+celery -A base worker -B --loglevel=INFO -Q celery,window
