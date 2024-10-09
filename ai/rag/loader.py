@@ -30,7 +30,7 @@ class PostLoader(BaseLoader):
 
         return [
             Document(
-                page_content=json.dumps(PostSerializer(item, user=self.user).data),
+                page_content=f"nickname:{item.user.nickname},content:{item.text}",
                 metadata=_build_metadata(item),
             )
             for item in self.items

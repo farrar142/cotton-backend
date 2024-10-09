@@ -71,11 +71,12 @@ def create_ai_post(post_id: int):
         return
     bots = parse_ai_users(post)
     for bot_id, post in bots.items():
-        _reply_to_users_post.delay(chatbot_id=bot_id, post_id=post.pk)
+        _reply_to_users_post(chatbot_id=bot_id, post_id=post.pk)
 
 
 @shared_task(queue="window")
 def _reply_to_users_post(chatbot_id: int, post_id: int):
+    print("rply")
     from posts.models import Post
     from posts.serializers import PostSerializer
     from posts.text_builder.block_text_builder import BlockTextBuilder
@@ -95,6 +96,7 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
 
     origin_documents = get_documents_from_posts(origins_data, chatbot)
     parent_documents = get_documents_from_posts([post], chatbot)
+    print(parent_documents)
     post_docs = [*origin_documents, *parent_documents]
 
     rag = Rag()

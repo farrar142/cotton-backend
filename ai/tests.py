@@ -9,6 +9,7 @@ from django.utils.timezone import localtime
 from base.test import TestCase
 from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
+from posts.models import Post
 
 from .rag import Rag, get_documents_from_urls, get_news_urls, filter_existing_urls
 from .ai_chat import ai_chat
@@ -95,18 +96,21 @@ class TestAI(TestCase):
         origin_post_id = resp.json()["id"]
         self.assertEqual(bool(is_post_to_chatbot(origin_post_id)), False)
 
-        self.client.login(self.user2)
+        self.client.login(self.user)
         resp = self.client.post(
             "/posts/",
             dict(
                 text=builder.get_plain_text(),
                 blocks=builder.get_json(),
                 parent=origin_post_id,
+                origin=origin_post_id,
             ),
         )
         post_id = resp.json()["id"]
         self.assertEqual(bool(is_post_to_chatbot(post_id)), True)
-        post = create_ai_post(post_id)
+        create_ai_post(post_id)
+        p = Post.objects.last()
+        create_ai_post(p.pk)
 
     def test_celery_queue(self):
         rag = Rag()
