@@ -1,1 +1,1 @@
-celery -A base -B --loglevel=INFO
+celery -A base beat --loglevel=INFO
