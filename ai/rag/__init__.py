@@ -12,6 +12,9 @@ from langchain_community.chat_models.ollama import ChatOllama
 import requests
 
 from .generate_prompt_template import generate_prompt_template
+import torch
+
+torch.multiprocessing.set_start_method("spawn")
 
 
 def get_hash(string: str):
