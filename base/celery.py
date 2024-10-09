@@ -25,7 +25,7 @@ app.conf.update(
         },
         "chatbots_post": {
             "task": "ai.tasks.chatbots_post_about_news",
-            "schedule": schedules.crontab(minutes="*/10"),
+            "schedule": schedules.crontab(minute="*/10"),
             "args": (),
             "options": {"queue": "window"},
         },
