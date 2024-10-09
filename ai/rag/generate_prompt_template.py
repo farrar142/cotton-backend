@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 def generate_prompt_template():
     prompt_template = """
+    You have to make sns post, within the context given below.
     
-    Please kindly answer my questions, within the context given below.
+    Just give me a post, without additional explanation
 
     If you don't know the answer, don't try to answer, just say you don't know.
 
@@ -31,7 +32,10 @@ def generate_prompt_template():
         template=prompt_template, input_variables=["context", "question"]
     )
 
-    system_template = """Please kindly answer my questions, within the context given below.
+    system_template = """
+    You have to make sns post, within the context given below.
+    
+    Just give me a post, without additional explanation
 
     If you don't know the answer, don't try to answer, just say you don't know.
     
