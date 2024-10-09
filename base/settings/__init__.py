@@ -10,11 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from datetime import timedelta
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 from os import getenv
 from dotenv import load_dotenv
 from pathlib import Path
-from celery.schedules import crontab
 from .restframework_settings import *
 from .db import *
 from .email import *
@@ -203,3 +204,14 @@ KAKAO_CLIENT_KEY = getenv("KAKAO_CLIENT_KEY")
 KAKAO_SECRET_KEY = getenv("KAKAO_SECRET_KEY")
 
 OLLAMA_URL = getenv("OLLAMA_URL")
+
+# SENTRY
+SENTRY_DSN = getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    print("sentry initialized")
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        auto_session_tracking=False,
+        traces_sample_rate=0,
+    )

@@ -29,3 +29,8 @@ langchain_community
 chromadb
 beautifulsoup4
 sentence-transformers
+
+
+# errorlogging
+
+sentry-sdk
