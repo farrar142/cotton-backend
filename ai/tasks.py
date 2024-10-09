@@ -126,15 +126,14 @@ def crawl_huffington_post():
 
 @shared_task(queue="window")
 def chatbots_post_about_news():
-    # 10분마다 한번 호출
+    # 5분마다 한번 호출
     users = User.objects.filter(chatbots__isnull=False)
     for user in users:
-        minute = randint(1, 20)
-        print(f"{minute=} after post")
-        if 10 < minute:
+        minute = randint(1, 10)
+        if 5 < minute:
             continue
         _chatbot_post_about_news.apply_async(
-            args=[user.pk], eta=timedelta(minutes=minute)
+            args=[user.pk], eta=localtime() + timedelta(minutes=minute)
         )
 
 
