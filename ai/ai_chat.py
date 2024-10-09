@@ -20,7 +20,7 @@ def ai_chat(ai: User, post: dict, previous_post: list[dict] | None = None) -> st
         messages=[
             {
                 "role": "system",
-                "content": f"Your name is {ai.nickname}, you have to reply to user's sns post",
+                "content": f"Your name is {ai.nickname}, you have to reply to user's sns post with under 1000 letters",
             },
             {
                 "role": "system",

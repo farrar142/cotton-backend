@@ -118,6 +118,7 @@ class Rag:
             db = self._get_chroma(collection_name=collection_name)
         from langchain.chains.question_answering import load_qa_chain
 
+        ""
         prompt = generate_prompt_template().get_prompt(self.client)
         chain = load_qa_chain(
             self.client,
