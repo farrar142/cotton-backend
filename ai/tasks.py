@@ -126,12 +126,36 @@ def _reply_to_users_post(chatbot_id: int, post_id: int):
 from base.celery import app
 
 
-@shared_task(queue="window")
+@shared_task()
 def crawl_news():
 
-    from .rag.combined import _crawl_news
+    from .models import NewsCrawler
 
-    _crawl_news()
+    for crawler in NewsCrawler.objects.values():
+        _crawl_news.delay(**crawler)
+
+
+@shared_task(queue="window")
+def _crawl_news(
+    collection_name: str,
+    news_url: str,
+    url_icontains: str,
+    article_tag: str,
+    article_id: str,
+    **kwargs,
+):
+    from .rag import get_documents_from_urls, get_news_urls, filter_existing_urls, Rag
+
+    urls = get_news_urls(news_url, icontain=url_icontains)
+    filtered_urls = filter_existing_urls(urls, collection_name)
+    if not filtered_urls:
+        return
+    docs = get_documents_from_urls(filtered_urls, 10, tag=article_tag, id=article_id)
+    now = localtime().isoformat()
+    for doc in docs:
+        doc.metadata.setdefault("created_at", now)
+    rag = Rag()
+    rag.save_news_to_db(docs, collection_name)
 
 
 @shared_task(queue="window")

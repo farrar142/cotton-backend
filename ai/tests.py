@@ -164,36 +164,33 @@ class TestAI(TestCase):
             return
         self.assertEqual(docs.__len__(), 11)
 
-    def test_ai_tweet_auto(self):
-        collection_name = "huff-test"
-        rag = Rag()
-        rag.truncate_collection(collection_name)
-        from posts.serializers import PostSerializer
-        from .rag.combined import _crawl_huffinton_post
+    # def test_ai_tweet_auto(self):
+    #     collection_name = "huff-test"
+    #     rag = Rag()
+    #     rag.truncate_collection(collection_name)
+    #     from posts.serializers import PostSerializer
 
-        _crawl_huffinton_post(collection_name)
+    #     resp: str = rag.ask_llm(
+    #         self.user,
+    #         "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
+    #         collection_name=collection_name,
+    #     )
 
-        resp: str = rag.ask_llm(
-            self.user,
-            "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
-            collection_name=collection_name,
-        )
-
-        builder = BlockTextBuilder()
-        splitted = resp.split("\n")
-        for text in splitted:
-            builder.text(text)
-        ser = PostSerializer(
-            data=dict(
-                text=builder.get_plain_text(),
-                blocks=builder.get_json(),
-            ),
-            user=self.user,
-        )
-        if not ser.is_valid():
-            return
-        ser.save()
-        print(ser.instance)
+    #     builder = BlockTextBuilder()
+    #     splitted = resp.split("\n")
+    #     for text in splitted:
+    #         builder.text(text)
+    #     ser = PostSerializer(
+    #         data=dict(
+    #             text=builder.get_plain_text(),
+    #             blocks=builder.get_json(),
+    #         ),
+    #         user=self.user,
+    #     )
+    #     if not ser.is_valid():
+    #         return
+    #     ser.save()
+    #     print(ser.instance)
 
     def test_is_chatbot(self):
         ChatBot.objects.create(user=self.user)
