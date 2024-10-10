@@ -9,6 +9,7 @@ from commons.viewsets import BaseViewset
 from images.models import Image
 from images.serializers import ImageSerializer
 from users.models import User, models
+from relations.models import Follow
 from ..services.post_service import PostService
 from ..models import Post
 from ..serializers import PostSerializer, FavoriteSerializer
@@ -63,7 +64,33 @@ class PostViewSet(BaseViewset[Post, User]):
             raise self.exceptions.NotFound
         return user
 
-    @action(methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)")
+    def get_custom_filterset(self, queryset: models.QuerySet[Post]):
+        qs = queryset.annotate(is_user_protected=models.F("user__is_protected"))
+        if not self.request.user.is_authenticated:
+            return qs.filter(models.Q(is_user_protected=False))
+        # post__user가 request.user를 팔로우중인지 알아야됨
+        # Follow의 followed_by=post__user와 following_to=request.user를 사용
+        return qs.filter(
+            models.Q(is_user_protected=False)  # 모든 유저
+            | models.Q(
+                models.Q(is_user_protected=True)
+                & models.Q(
+                    models.Q(
+                        user=self.request.user
+                    )  # 프로텍트 되어있지만 나의 글인경우
+                    | models.Q(
+                        is_post_user_following_request_user=True,
+                        is_user_following_post_user=True,
+                    )  # 서로 팔로우 하는 경우
+                )
+            )
+        )
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path=r"timeline/username/(?P<username>[\w-]+)",
+    )
     def get_user_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
         self.get_queryset = lambda: Post.concrete_queryset(self.request.user, user)
@@ -121,7 +148,7 @@ class PostViewSet(BaseViewset[Post, User]):
     def get_timeline(self, *args, **kwargs):
         self.override_get_queryset(
             lambda qs: qs.filter(
-                models.Q(user__followers__followed_by=self.request.user)
+                models.Q(is_post_user_following_request_user=True)
                 | models.Q(user=self.request.user)
                 | models.Q(has_repost=True)
             )

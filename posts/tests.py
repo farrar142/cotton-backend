@@ -8,6 +8,7 @@ from commons.serializers import inject_context
 from users.models import User
 
 from .text_builder.block_text_builder import BlockTextBuilder
+from relations.service import FollowService
 from .services.post_service import PostService
 from .models import Post, Favorite, Bookmark, Repost
 from .serializers import (
@@ -27,14 +28,14 @@ from .serializers import (
 class TestPostPagination(TestCase):
     def test_pagination(self):
         Post.objects.all().delete()
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/")
+        resp = self.client.get(f"/posts/timeline/username/{self.user.username}/")
         self.assertEqual(resp.status_code, 200)
         self.pprint(resp.json())
         posts = Post.objects.bulk_create(
             [Post(text=str(i), user=self.user) for i in range(5)], batch_size=1
         )
         self.client.login(self.user)
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/")
+        resp = self.client.get(f"/posts/timeline/username/{self.user.username}/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["results"][0]["id"], posts[-1].pk)
         current_offset = resp.json()["current_offset"]
@@ -43,14 +44,14 @@ class TestPostPagination(TestCase):
             [Post(text=str(i), user=self.user) for i in range(3)], batch_size=1
         )
         resp = self.client.get(
-            f"/posts/timeline/{self.user.username}/",
+            f"/posts/timeline/username/{self.user.username}/",
             dict(offset=current_offset),
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["results"][0]["id"], posts[-1].pk)
 
         resp = self.client.get(
-            f"/posts/timeline/{self.user.username}/",
+            f"/posts/timeline/username/{self.user.username}/",
             dict(offset=current_offset, direction="prev"),
         )
         self.assertEqual(resp.status_code, 200)
@@ -142,7 +143,7 @@ class TestPosts(TestCase):
         )
         self.assertEqual(resp.status_code, 201)
 
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/media/")
+        resp = self.client.get(f"/posts/timeline/username/{self.user.username}/media/")
         self.assertEqual(resp.status_code, 200)
 
     def test_replies(self):
@@ -159,7 +160,9 @@ class TestPosts(TestCase):
         self.assertEqual(resp.status_code, 201)
         post_id = resp.json()["id"]
 
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        resp = self.client.get(
+            f"/posts/timeline/username/{self.user.username}/replies/"
+        )
         self.assertEqual(resp.json()["results"].__len__(), 0)
 
         resp = self.client.post(
@@ -180,7 +183,9 @@ class TestPosts(TestCase):
         resp = self.client.get(f"/posts/{post_id}/")
         self.assertEqual(resp.json().get("replies_count"), 1)
 
-        resp = self.client.get(f"/posts/timeline/{self.user.username}/replies/")
+        resp = self.client.get(
+            f"/posts/timeline/username/{self.user.username}/replies/"
+        )
         self.assertEqual(resp.json()["results"].__len__(), 1)
         self.client.login(self.user2)
         resp = self.client.post(
@@ -198,7 +203,9 @@ class TestPosts(TestCase):
         self.assertEqual(resp.json()["depth"], 2)
         post3_id = resp.json()["id"]
 
-        resp = self.client.get(f"/posts/timeline/{self.user2.username}/replies/")
+        resp = self.client.get(
+            f"/posts/timeline/username/{self.user2.username}/replies/"
+        )
         self.assertEqual(resp.json()["results"].__len__(), 1)
         self.assertEqual(resp.json()["results"][0]["depth"], 2)
         self.assertEqual(resp.json()["results"][0]["origin"], post_id)
@@ -244,16 +251,24 @@ class TestPosts(TestCase):
 
 
 class TestPostsBase(TestCase):
-    def setUp(self):
-        super().setUp()
+    user: User
+    user2: User
+    user3: User
+
+    def create_post(self, user: User) -> int:
         builder = BlockTextBuilder()
         builder.text("hello world")
         self.ps = PostSerializer(
-            data=dict(text="hello world", blocks=builder.get_json()), user=self.user
+            data=dict(text="hello world", blocks=builder.get_json()), user=user
         )
         self.ps.is_valid(raise_exception=True), self.ps.save()
+        return self.ps.instance.pk  # type:ignore
 
-        self.post_id: int = self.ps.instance.pk  # type:ignore
+    def setUp(self):
+        super().setUp()
+        Post.objects.all().delete()
+
+        self.post_id: int = self.create_post(self.user)
 
 
 class TestFavorite(TestPostsBase):
@@ -333,6 +348,36 @@ class TestView(TestPostsBase):
 
 class TestProtected(TestPostsBase):
     def test_cannot_see_protected_users(self):
+        post2_id = self.create_post(self.user2)
+        self.user.is_protected = True
+        self.user.save()
+        self.client.login(self.user)
+        resp = self.client.get(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(f"/posts/")
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+
         self.client.login(self.user2)
         resp = self.client.get(f"/posts/{self.post_id}/")
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 404)
+
+        FollowService(self.user).follow(self.user2)
+        FollowService(self.user2).follow(self.user)
+
+        self.client.login(self.user2)
+        resp = self.client.get(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(f"/posts/timeline/global/")
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        resp = self.client.get(f"/posts/timeline/followings/")
+        self.assertEqual(resp.json()["results"].__len__(), 2)
+        resp = self.client.get(f"/posts/timeline/username/{self.user.username}/")
+        self.assertEqual(resp.json()["results"].__len__(), 1)
+
+        self.client.login(self.user3)
+        resp = self.client.get(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 404)
+        resp = self.client.get(f"/posts/timeline/global/")
+        self.assertEqual(resp.json()["results"].__len__(), 1)
+        resp = self.client.get(f"/posts/timeline/username/{self.user.username}/")
+        self.assertEqual(resp.json()["results"].__len__(), 0)

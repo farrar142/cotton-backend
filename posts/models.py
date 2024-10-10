@@ -42,6 +42,9 @@ class Post(CommonModel):
     has_bookmark = make_property_field(False)
     has_quote = make_property_field(False)
     has_repost = make_property_field(False)
+    is_post_user_following_request_user = make_property_field(False)
+    is_user_following_post_user = make_property_field(False)
+
     is_reply_to_ai: int | None = make_property_field(None)
     is_quote_to_ai: int | None = make_property_field(None)
     is_mentioned_post: int | None = make_property_field(None)
@@ -77,6 +80,10 @@ class Post(CommonModel):
                 has_bookmark=cls.get_has_bookmark(user),
                 has_repost=cls.get_has_repost(user),
                 has_quote=cls.get_has_quote(user),
+                is_post_user_following_request_user=cls.get_is_post_user_following_request_user(
+                    user
+                ),
+                is_user_following_post_user=cls.get_is_user_following_post_user(user),
                 reply_row_number_desc=cls.get_reply_row_number_desc(),
             )
         )
@@ -241,6 +248,30 @@ class Post(CommonModel):
                 models.F("user_id"),
             ],
             order_by=models.F("created_at").desc(),
+        )
+
+    @classmethod
+    def get_is_post_user_following_request_user(cls, user: AbstractBaseUser | None):
+        if user == None:
+            return models.Value(False)
+        from relations.models import Follow
+
+        return models.Exists(
+            Follow.objects.filter(
+                followed_by=models.OuterRef("user"), following_to=user
+            )
+        )
+
+    @classmethod
+    def get_is_user_following_post_user(cls, user: AbstractBaseUser | None):
+        if user == None:
+            return models.Value(False)
+        from relations.models import Follow
+
+        return models.Exists(
+            Follow.objects.filter(
+                followed_by=user, following_to=models.OuterRef("user")
+            )
         )
 
 
