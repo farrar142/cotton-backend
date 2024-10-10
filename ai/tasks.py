@@ -1,4 +1,4 @@
-from random import randint
+from random import choice, randint
 from typing import TYPE_CHECKING
 
 from django.db import models
@@ -160,14 +160,29 @@ def _crawl_news(
 
 @shared_task(queue="window")
 def chatbots_post_about_news():
+    from .models import ChatBot, NewsCrawler
+
     # 5분마다 한번 호출
-    users = User.objects.filter(chatbots__isnull=False)
+    users = User.objects.annotate(
+        models.Prefetch(
+            "chatbots",
+            ChatBot.objects.prefetch_related("news_subscriptions").all(),
+        )
+    ).filter(chatbots__isnull=False)
     for user in users:
+        if not (chatbot := user.chatbots):
+            continue
+        if not (subscriptions := chatbot.news_subscriptions.all()):
+            continue
+        news = choice(subscriptions)
         minute = randint(1, 10)
+
         if 5 < minute:
             continue
         _chatbot_post_about_news.apply_async(
-            args=[user.pk], eta=localtime() + timedelta(minutes=minute)
+            args=[user.pk],
+            kwargs={"collection_name": news.collection_name},
+            eta=localtime() + timedelta(minutes=minute),
         )
 
 

@@ -1,3 +1,4 @@
+from typing import Self
 import urllib.parse
 from django.db import models
 from users.models import User
@@ -17,4 +18,6 @@ class NewsCrawler(models.Model):
 class ChatBot(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="chatbots")
     character = models.TextField(default="")
-    news_subscriptions = models.ManyToManyField(NewsCrawler, related_name="chatbots")
+    news_subscriptions: "models.ManyToManyField[NewsCrawler,Self]" = (
+        models.ManyToManyField(NewsCrawler, related_name="chatbots")
+    )
