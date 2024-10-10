@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
 
 class User(UserAbstract):
+    is_protected = models.BooleanField(default=False)
     is_registered = models.BooleanField(default=False)
     registered_at = models.DateTimeField(null=True)
     bio = models.CharField(max_length=511, default="")

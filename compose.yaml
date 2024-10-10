@@ -10,7 +10,7 @@ services:
       - .:/app
       - .vscode-server:/root/.vscode-server
     env_file:
-      - ./.env
+      - ./.env.development
     healthcheck:
         test: ['CMD','curl','http://localhost:8002/']
         interval: 10s
@@ -65,7 +65,7 @@ services:
     volumes:
       - window-celery:/root/.cache
     env_file:
-      - ./.env
+      - ./.env.window
     restart: on-failure
     deploy:
       resources:
