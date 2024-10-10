@@ -7,7 +7,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from chromadb.api import ClientAPI as ChromaClientAPI
 
 
-def split_docs(documents: list[Document], chunk_size=1000, chunk_overlap=1000):
+def split_docs(documents: list[Document], chunk_size=1000, chunk_overlap=50):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )

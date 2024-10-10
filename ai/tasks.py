@@ -9,7 +9,12 @@ from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.serializers import PostSerializer
 
-from .loaders import get_documents_from_urls, get_news_urls, filter_existing_urls
+from .loaders import (
+    get_documents_from_urls_v2,
+    get_news_urls,
+    filter_existing_urls,
+    split_docs,
+)
 
 if TYPE_CHECKING:
     from posts.models import Post
@@ -143,7 +148,7 @@ def _crawl_news(
     news_url: str,
     url_icontains: str,
     article_tag: str,
-    article_id: str,
+    article_attrs: dict,
     **kwargs,
 ):
     from .rag import Rag, chroma
@@ -152,12 +157,15 @@ def _crawl_news(
     filtered_urls = filter_existing_urls(urls, collection_name, chroma=chroma)
     if not filtered_urls:
         return
-    docs = get_documents_from_urls(filtered_urls, 10, tag=article_tag, id=article_id)
+    docs = get_documents_from_urls_v2(
+        filtered_urls, limit=10, tag=article_tag, attrs=article_attrs
+    )
+    splitted = split_docs(docs)
     now = localtime().isoformat()
-    for doc in docs:
+    for doc in splitted:
         doc.metadata.setdefault("created_at", now)
     rag = Rag()
-    rag.save_documents_by_embbeding(docs, collection_name)
+    rag.save_documents_by_embbeding(splitted, collection_name)
 
 
 @shared_task(queue="window")
