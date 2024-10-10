@@ -51,8 +51,9 @@ def get_news_urls(
             )
         )
     )
-    shuffle(urls)
-    return urls
+    empty_filtered = list(filter(lambda x: x != "", urls))
+    shuffle(empty_filtered)
+    return empty_filtered
 
 
 def filter_existing_urls(urls: list[str], collection_name: str):
