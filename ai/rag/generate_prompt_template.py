@@ -14,12 +14,12 @@ if TYPE_CHECKING:
 
 def chatbot_define_prompt(chatbot: "User", user: "User|None" = None):
     name_prompt = f"Your name is {chatbot.nickname}.\n"
-    if not chatbot.chat_bots or not chatbot.chat_bots.character:
+    if not chatbot.chatbots or not chatbot.chatbots.character:
         return name_prompt
 
     user_nickname = user.nickname if user else "user"
 
-    character_prompt = chatbot.chat_bots.character.format(
+    character_prompt = chatbot.chatbots.character.format(
         chatbot=chatbot.nickname, user=user_nickname
     )
 
