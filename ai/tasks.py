@@ -217,7 +217,19 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
 
     splitted = resp.split("\n")
 
-    splitted = list(filter(lambda x: "summary of today" not in x, splitted))
+    def filter_lines(lines: list[str], *filterings: str):
+        filtered = filter(lambda x: True, lines)
+        for filtering in filterings:
+            filtered = filter(lambda x: filtering not in x, filtered)
+        return list(filtered)
+
+    splitted = filter_lines(
+        splitted,
+        "summary of today",
+        "summary of one",
+        "Here's is a summary",
+        "Here is a summary",
+    )
 
     builder = BlockTextBuilder()
     for text in splitted:
