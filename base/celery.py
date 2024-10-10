@@ -16,7 +16,7 @@ app.config_from_object(f"django.conf:settings", namespace="CELERY")
 app.conf.update(
     CELERY_BEAT_SCHEDULE={
         "crawl_news": {
-            "task": "ai.tasks.crawl_huffington_post",
+            "task": "ai.tasks.crawl_news",
             "schedule": schedules.crontab(
                 hour="*", minute="0"
             ),  # 매시 정각에 실행되도록
