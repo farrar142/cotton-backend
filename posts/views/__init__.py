@@ -100,7 +100,9 @@ class PostViewSet(BaseViewset[Post, User]):
         return self.list(*args, **kwargs)
 
     @action(
-        methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)/replies"
+        methods=["GET"],
+        detail=False,
+        url_path=r"timeline/username/(?P<username>[\w-]+)/replies",
     )
     def get_users_replies_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
@@ -112,7 +114,9 @@ class PostViewSet(BaseViewset[Post, User]):
         return self.list(*args, **kwargs)
 
     @action(
-        methods=["GET"], detail=False, url_path=r"timeline/(?P<username>[\w-]+)/media"
+        methods=["GET"],
+        detail=False,
+        url_path=r"timeline/username/(?P<username>[\w-]+)/media",
     )
     def get_users_media_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
@@ -130,7 +134,7 @@ class PostViewSet(BaseViewset[Post, User]):
     @action(
         methods=["GET"],
         detail=False,
-        url_path=r"timeline/(?P<username>[\w-]+)/favorites",
+        url_path=r"timeline/username/(?P<username>[\w-]+)/favorites",
     )
     def get_users_favorite_timeline(self, *args, **kwargs):
         user = self.get_user_from_queries()
