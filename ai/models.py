@@ -6,7 +6,7 @@ from users.models import User
 # Create your models here.
 
 
-class NewsCralwer(models.Model):
+class NewsCrawler(models.Model):
     collection_name = models.TextField(default="huffington")
     news_url = models.URLField(default="https://huffpost.com")
     url_icontains = models.CharField(max_length=255, default="/entry/")
