@@ -140,7 +140,7 @@ class Rag:
         chain = load_qa_chain(
             self.client,
             chain_type="stuff",
-            verbose=True,
+            verbose=False,
             prompt=prompt,
         )
         matching_docs = db.similarity_search(query=query)
@@ -163,7 +163,7 @@ class Rag:
         db = self._get_chroma(collection_name=collection_name)
         prompt = generate_reply_prompt_template(chatbot, user).get_prompt(self.client)
         chain = load_qa_chain(
-            self.client, chain_type="stuff", verbose=True, prompt=prompt
+            self.client, chain_type="stuff", verbose=False, prompt=prompt
         )
         matching_docs = db.similarity_search(query=query)
         # chain.invoke()

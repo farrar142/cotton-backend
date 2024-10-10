@@ -35,6 +35,7 @@ class UserAbstract(AbstractBaseUser, PermissionsMixin):
 if TYPE_CHECKING:
     from relations.models import Follow
     from chats.models import MessageGroup, MessageAttendant
+    from ai.models import ChatBot
 
 
 class User(UserAbstract):
@@ -57,6 +58,7 @@ class User(UserAbstract):
     message_groups: "models.Manager[MessageGroup]"
     message_attendants: "models.Manager[MessageAttendant]"
     third_party_integrations: "models.Manager[ThirdPartyIntegration]"
+    chat_bots: "models.OneToOneField[ChatBot|None]"
 
     followings_count = make_property_field(False)
     followers_count = make_property_field(False)
