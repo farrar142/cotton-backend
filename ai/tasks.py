@@ -160,14 +160,14 @@ def _crawl_news(
     docs = get_documents_from_urls_v2(
         filtered_urls, limit=10, tag=article_tag, attrs=article_attrs
     )
-    splitted = split_docs(docs)
-    if not splitted:
+    # splitted = split_docs(docs)
+    if not docs:
         return
     now = localtime().isoformat()
-    for doc in splitted:
+    for doc in docs:
         doc.metadata.setdefault("created_at", now)
     rag = Rag()
-    rag.save_documents_by_embbeding(splitted, collection_name)
+    rag.save_documents_by_embbeding(docs, collection_name)
 
 
 @shared_task(queue="window")
