@@ -15,7 +15,7 @@ app = Celery("base", broker=os.getenv("CACHE_HOST"), backend=os.getenv("CACHE_HO
 app.config_from_object(f"django.conf:settings", namespace="CELERY")
 app.conf.update(
     CELERY_BEAT_SCHEDULE={
-        "crawl_huffington": {
+        "crawl_news": {
             "task": "ai.tasks.crawl_huffington_post",
             "schedule": schedules.crontab(
                 hour="*", minute="0"

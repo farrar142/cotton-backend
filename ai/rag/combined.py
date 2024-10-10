@@ -1,7 +1,7 @@
 from django.utils.timezone import localtime
 
 
-def _crawl_huffinton_post(collection_name: str = "huffington"):
+def _crawl_news(collection_name: str = "huffington"):
     from . import get_documents_from_urls, get_news_urls, filter_existing_urls, Rag
 
     urls = get_news_urls("https://huffpost.com", icontain="/entry/")

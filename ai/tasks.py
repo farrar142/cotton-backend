@@ -127,11 +127,11 @@ from base.celery import app
 
 
 @shared_task(queue="window")
-def crawl_huffington_post():
+def crawl_news():
 
-    from .rag.combined import _crawl_huffinton_post
+    from .rag.combined import _crawl_news
 
-    _crawl_huffinton_post()
+    _crawl_news()
 
 
 @shared_task(queue="window")
