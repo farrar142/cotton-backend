@@ -163,7 +163,7 @@ def chatbots_post_about_news():
     from .models import ChatBot, NewsCrawler
 
     # 5분마다 한번 호출
-    users = User.objects.annotate(
+    users = User.objects.prefetch_related(
         models.Prefetch(
             "chatbots",
             ChatBot.objects.prefetch_related("news_subscriptions").all(),
@@ -184,6 +184,9 @@ def chatbots_post_about_news():
             kwargs={"collection_name": news.collection_name},
             eta=localtime() + timedelta(minutes=minute),
         )
+
+
+zip
 
 
 @shared_task(queue="window")
