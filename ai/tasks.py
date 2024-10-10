@@ -155,7 +155,7 @@ def _crawl_news(
     for doc in docs:
         doc.metadata.setdefault("created_at", now)
     rag = Rag()
-    rag.save_news_to_db(docs, collection_name)
+    rag.save_documents_by_embbeding(docs, collection_name)
 
 
 @shared_task(queue="window")
@@ -184,9 +184,6 @@ def chatbots_post_about_news():
             kwargs={"collection_name": news.collection_name},
             eta=localtime() + timedelta(minutes=minute),
         )
-
-
-zip
 
 
 @shared_task(queue="window")

@@ -99,7 +99,14 @@ class Rag:
         self.chroma = chroma
         self.embedding = embedding
 
-    def __save_documents_by_embbeding(
+    def _get_chroma(self, collection_name: str):
+
+        db = Chroma(
+            collection_name, client=self.chroma, embedding_function=self.embedding
+        )
+        return db
+
+    def save_documents_by_embbeding(
         self, documents: list[Document], collection_name: str
     ) -> Chroma:
         db = Chroma.from_documents(
@@ -109,16 +116,6 @@ class Rag:
             collection_name=collection_name,
         )
         return db
-
-    def _get_chroma(self, collection_name: str):
-
-        db = Chroma(
-            collection_name, client=self.chroma, embedding_function=self.embedding
-        )
-        return db
-
-    def save_news_to_db(self, documents: list[Document], collection_name: str = "news"):
-        self.__save_documents_by_embbeding(documents, collection_name)
 
     def truncate_collection(self, collection_name: str):
         self.chroma.get_or_create_collection(collection_name)
