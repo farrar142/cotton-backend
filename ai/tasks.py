@@ -161,6 +161,8 @@ def _crawl_news(
         filtered_urls, limit=10, tag=article_tag, attrs=article_attrs
     )
     splitted = split_docs(docs)
+    if not splitted:
+        return
     now = localtime().isoformat()
     for doc in splitted:
         doc.metadata.setdefault("created_at", now)
@@ -185,6 +187,7 @@ def chatbots_post_about_news():
         if not (subscriptions := chatbot.news_subscriptions.all()):
             continue
         news = choice(subscriptions)
+        print(user, news.collection_name)
         minute = randint(1, 10)
 
         if 5 < minute:

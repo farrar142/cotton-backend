@@ -64,5 +64,6 @@ def get_news_urls(
         )
     )
     empty_filtered = list(filter(lambda x: x != "", urls))
+    trump_filtered = list(filter(lambda x: "trump" not in x.lower(), empty_filtered))
     shuffle(empty_filtered)
-    return empty_filtered
+    return trump_filtered
