@@ -46,6 +46,12 @@ class BaseViewset(CustomFiltersetMixin[M, U], ModelViewSet, Generic[M, U]):
     def get_queryset(self):
         return self.queryset
 
+    def get_custom_filterset(self, queryset: models.QuerySet[M]):
+        return queryset
+
+    def filter_queryset(self, queryset: models.QuerySet[M]):
+        return self.get_custom_filterset(super().filter_queryset(queryset))
+
     @decorators.action(methods=["GET"], detail=False, url_path="flat")
     def flat_items(self, *args, **kwargs):
         self.pagination_class = None

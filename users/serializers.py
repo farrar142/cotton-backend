@@ -40,6 +40,7 @@ class UserSerializer(UserBaseSerializer):
             "registerd_at",
             "name",
             "is_chat_bot",
+            "is_protected",
         )
         read_only_fields = ("registered_at",)
 

@@ -329,3 +329,10 @@ class TestView(TestPostsBase):
         resp = self.client.get("/posts/timeline/followings/")
         self.assertEqual(resp.json()["results"][0]["has_view"], True)
         self.assertEqual(resp.json()["results"][0]["views_count"], 1)
+
+
+class TestProtected(TestPostsBase):
+    def test_cannot_see_protected_users(self):
+        self.client.login(self.user2)
+        resp = self.client.get(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 403)
