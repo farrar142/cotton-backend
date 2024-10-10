@@ -62,7 +62,15 @@ class UserSerializer(UserBaseSerializer):
 class UserUpsertSerializer(BaseModelSerializer[User]):
     class Meta:
         model = User
-        fields = ("id", "bio", "profile_image", "header_image", "nickname", "username")
+        fields = (
+            "id",
+            "bio",
+            "profile_image",
+            "header_image",
+            "nickname",
+            "username",
+            "is_protected",
+        )
 
     username = serializers.CharField(
         max_length=64, required=False, allow_null=True, allow_blank=True
