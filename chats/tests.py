@@ -2,6 +2,8 @@ from django.db import connection, transaction
 from base.test import TestCase
 from commons.lock import with_lock
 
+from relations.service import FollowService
+
 from .models import MessageGroup, MessageAttendant, Message, User, models
 from .serializers import MessageGroupSerializer
 from .services import MessageService
@@ -102,6 +104,20 @@ class TestMessages(TestCase):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.json()["is_direct_message"], False)
         self.assertEqual(resp.json()["title"], "강남역 12월모임")
+
+    def test_cannot_create_direct_message_to_protected(self):
+        self.user.is_protected = True
+        self.user.save()
+        is_valid = MessageService.is_valid_to_create(self.user, self.user2)
+        self.assertEqual(is_valid, True)
+        is_valid = MessageService.is_valid_to_create(self.user2, self.user)
+        self.assertEqual(is_valid, False)
+
+        FollowService(self.user2).follow(self.user)
+        FollowService(self.user).follow(self.user2)
+
+        is_valid = MessageService.is_valid_to_create(self.user, self.user2)
+        self.assertEqual(is_valid, True)
 
 
 class TestMessage(TestCase):

@@ -10,21 +10,57 @@ from .tasks import send_message_by_ws_to_group
 
 
 class MessageService:
+
+    @classmethod
+    def is_valid_to_create(cls, user, *attendants: User, raise_exception=False):
+        errors: list[str] = []
+        for attendant in attendants:
+            if not attendant.is_protected:
+                continue
+            if attendant.is_mutual_follow:
+                continue
+            errors.append(
+                f"Cannot create Message Group with protected user {attendant.username}"
+            )
+
+        if errors:
+            if raise_exception:
+                raise exceptions.ValidationError(detail=dict(users=errors))
+            return False
+        return True
+
     @classmethod
     @transaction.atomic
-    def create(cls, *users: User, is_direct_message: bool = True, title: str = ""):
+    def get_or_create(
+        cls, *users: User, is_direct_message: bool = True, title: str = ""
+    ):
         pk_flattened = map(lambda u: u.pk, users)
         key = "message-create=" + ":".join(sorted(map(str, pk_flattened)))
         with with_lock(key):
-            if is_direct_message:
-                if group := cls.get_direct_message_group(*users):
-                    return cls(group)
+            if service := cls.get_or_false(
+                *users, is_direct_message=is_direct_message, title=title
+            ):
+                return service
+            cls.is_valid_to_create(*users, raise_exception=True)
+            return cls.create(*users, is_direct_message=is_direct_message, title=title)
 
-            group = MessageGroup.objects.create(
-                is_direct_message=is_direct_message, title=title
-            )
-            group.attendants.add(*users)
-            return cls(group)
+    @classmethod
+    def get_or_false(
+        cls, *users: User, is_direct_message: bool = True, title: str = ""
+    ):
+        if not is_direct_message:
+            return False
+        if not (group := cls.get_direct_message_group(*users)):
+            return False
+        return cls(group)
+
+    @classmethod
+    def create(cls, *users: User, is_direct_message: bool = True, title: str = ""):
+        group = MessageGroup.objects.create(
+            is_direct_message=is_direct_message, title=title
+        )
+        group.attendants.add(*users)
+        return cls(group)
 
     @classmethod
     def get_direct_message_group(cls, *users: User):
