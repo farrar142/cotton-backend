@@ -10,9 +10,13 @@ from base.test import TestCase
 from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.models import Post
-
-from .rag import Rag, get_documents_from_urls, get_news_urls, filter_existing_urls
-from .ai_chat import ai_chat
+from .loaders import (
+    get_documents_from_urls,
+    get_documents_from_urls_v2,
+    get_news_urls,
+    filter_existing_urls,
+    split_docs,
+)
 from .models import ChatBot
 from .tasks import is_post_to_chatbot, create_ai_post
 
@@ -115,6 +119,8 @@ class TestAI(TestCase):
         create_ai_post(p.pk)
 
     def test_celery_queue(self):
+        from .rag import Rag, chroma
+
         rag = Rag()
         """
         1. 외부 site에서 뉴스를 크롤링해 저장해야됨.
@@ -139,11 +145,11 @@ class TestAI(TestCase):
 
         def save():
             # urls = get_news_urls("https://huffpost.com", icontain="/entry/")
-            urls = filter_existing_urls(d_urls, collection_name)
+            urls = filter_existing_urls(d_urls, collection_name, chroma=chroma)
             docs = get_documents_from_urls(urls, 10, tag="main", id="main")
             for doc in docs:
                 doc.metadata.setdefault("created_at", localtime().isoformat())
-            rag.save_news_to_db(docs, collection_name)
+            rag.save_documents_by_embbeding(docs, collection_name)
 
         save()
 
@@ -196,3 +202,15 @@ class TestAI(TestCase):
         ChatBot.objects.create(user=self.user)
         users = User.objects.filter(chatbots__isnull=False)
         self.assertEqual(users.count(), 1)
+
+    def test_crawl_huff_post(self):
+        urls = get_news_urls("https://www.huffpost.com", icontain="/entry/")
+        print(urls[:1])
+        docs = get_documents_from_urls_v2(
+            urls,
+            limit=1,
+            tag="div",
+            attrs={"class": "primary-cli cli cli-text "},
+        )
+        print(docs)
+        self.pprint(split_docs(docs, chunk_overlap=20))

@@ -5,6 +5,8 @@ from users.models import User
 
 
 # Create your models here.
+def get_default_attrs():
+    return {"class": "primary-cli cli cli-text "}
 
 
 class NewsCrawler(models.Model):
@@ -13,6 +15,7 @@ class NewsCrawler(models.Model):
     url_icontains = models.CharField(max_length=255, default="/entry/")
     article_tag = models.CharField(max_length=63, default="main")
     article_id = models.CharField(max_length=63, default="main")
+    article_attrs = models.JSONField(default=get_default_attrs)
 
 
 class ChatBot(models.Model):

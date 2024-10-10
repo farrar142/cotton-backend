@@ -86,7 +86,7 @@ class UserUpsertSerializer(BaseModelSerializer[User]):
         return instance
 
     def create_image(self, instance: User, key: str):
-        image = self.initial_data.get(key)
+        image = self.initial_data.get(key)  # type:ignore
         if not image:
             return
         serializer = ImageSerializer(data=image)

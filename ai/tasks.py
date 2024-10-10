@@ -9,6 +9,8 @@ from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.serializers import PostSerializer
 
+from .loaders import get_documents_from_urls, get_news_urls, filter_existing_urls
+
 if TYPE_CHECKING:
     from posts.models import Post
 
@@ -144,10 +146,10 @@ def _crawl_news(
     article_id: str,
     **kwargs,
 ):
-    from .rag import get_documents_from_urls, get_news_urls, filter_existing_urls, Rag
+    from .rag import Rag, chroma
 
     urls = get_news_urls(news_url, icontain=url_icontains)
-    filtered_urls = filter_existing_urls(urls, collection_name)
+    filtered_urls = filter_existing_urls(urls, collection_name, chroma=chroma)
     if not filtered_urls:
         return
     docs = get_documents_from_urls(filtered_urls, 10, tag=article_tag, id=article_id)
