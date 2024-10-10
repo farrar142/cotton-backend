@@ -21,7 +21,6 @@ app.conf.update(
                 hour="*", minute="0"
             ),  # 매시 정각에 실행되도록
             "args": (),
-            "options": {"queue": "window"},
         },
         "chatbots_post": {
             "task": "ai.tasks.chatbots_post_about_news",
