@@ -88,7 +88,7 @@ def generate_reply_prompt_template(chatbot: "User", user: "User"):
 
     def get_chat_prompt():
         system_template = (
-            generic_prompt(chatbot)
+            generic_prompt(chatbot, user)
             + user_define_prompt(user)
             + """----------------
         {context}"""

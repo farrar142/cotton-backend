@@ -6,6 +6,8 @@ def _crawl_huffinton_post(collection_name: str = "huffington"):
 
     urls = get_news_urls("https://huffpost.com", icontain="/entry/")
     filtered_urls = filter_existing_urls(urls, collection_name)
+    if not filtered_urls:
+        return
     docs = get_documents_from_urls(filtered_urls, 10, tag="main", id="main")
     now = localtime().isoformat()
     for doc in docs:
