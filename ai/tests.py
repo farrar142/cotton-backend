@@ -174,6 +174,7 @@ class TestAI(TestCase):
         _crawl_huffinton_post(collection_name)
 
         resp: str = rag.ask_llm(
+            self.user,
             "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
             collection_name=collection_name,
         )

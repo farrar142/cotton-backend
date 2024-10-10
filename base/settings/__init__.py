@@ -208,7 +208,6 @@ OLLAMA_URL = getenv("OLLAMA_URL")
 # SENTRY
 SENTRY_DSN = getenv("SENTRY_DSN")
 if SENTRY_DSN:
-    print("sentry initialized")
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
