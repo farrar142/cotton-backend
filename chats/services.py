@@ -151,7 +151,7 @@ class MessageService:
         ):
             raise exceptions.ValidationError(
                 detail=dict(
-                    user=[[f"User {u.username} already in group"] for u in already]
+                    user=[f"User {u.username} already in group" for u in already]
                 )
             )
         self.group.attendants.add(*add_users)
