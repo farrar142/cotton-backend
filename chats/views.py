@@ -71,7 +71,10 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
                 detail=dict(user=["자신에게 대화를 보낼 수 없습니다."])
             )
         service = MessageService.get_or_create(
-            *users, is_direct_message=len(pk_flattened) == 2, title=title
+            self.request.user,
+            *users[1:],
+            is_direct_message=len(pk_flattened) == 2,
+            title=title
         )
         self.get_object = lambda: service.group
         response = self.retrieve(*args, **kwargs)

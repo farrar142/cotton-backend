@@ -32,17 +32,19 @@ class MessageService:
     @classmethod
     @transaction.atomic
     def get_or_create(
-        cls, *users: User, is_direct_message: bool = True, title: str = ""
+        cls, me: User, *users: User, is_direct_message: bool = True, title: str = ""
     ):
-        pk_flattened = map(lambda u: u.pk, users)
+        pk_flattened = map(lambda u: u.pk, [me, *users])
         key = "message-create=" + ":".join(sorted(map(str, pk_flattened)))
         with with_lock(key):
             if service := cls.get_or_false(
-                *users, is_direct_message=is_direct_message, title=title
+                me, *users, is_direct_message=is_direct_message, title=title
             ):
                 return service
-            cls.is_valid_to_create(*users, raise_exception=True)
-            return cls.create(*users, is_direct_message=is_direct_message, title=title)
+            cls.is_valid_to_create(me, *users, raise_exception=True)
+            return cls.create(
+                me, *users, is_direct_message=is_direct_message, title=title
+            )
 
     @classmethod
     def get_or_false(
