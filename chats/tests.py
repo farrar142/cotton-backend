@@ -108,6 +108,8 @@ class TestMessages(TestCase):
     def test_cannot_create_direct_message_to_protected(self):
         self.user.is_protected = True
         self.user.save()
+        is_valid = MessageService.is_valid_to_create(self.user, self.user2, self.user3)
+        self.assertEqual(is_valid, True)
         is_valid = MessageService.is_valid_to_create(self.user, self.user2)
         self.assertEqual(is_valid, True)
         is_valid = MessageService.is_valid_to_create(self.user2, self.user)

@@ -146,11 +146,13 @@ class MessageService:
             )
 
         self.__class__.is_valid_to_create(user, *add_users, raise_exception=True)
-        if self.group.attendants.filter(
+        if already := self.group.attendants.filter(
             pk__in=list(map(lambda u: u.pk, add_users))
-        ).exists():
+        ):
             raise exceptions.ValidationError(
-                detail=dict(user=["User already in group"])
+                detail=dict(
+                    user=[[f"User {u.username} already in group"] for u in already]
+                )
             )
         self.group.attendants.add(*add_users)
         send_group_state_changed_to_users.delay(self.group.pk)
