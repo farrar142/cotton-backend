@@ -68,7 +68,7 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         pk_flattened = set(map(lambda x: x.pk, users))
         if len(set(pk_flattened)) == 1:
             raise exceptions.ValidationError(
-                detail=dict(user=["자신에게 대화를 보낼 수 없습니다."])
+                detail=dict(user=["Cannot create message yourself."])
             )
         service = MessageService.get_or_create(
             self.request.user,
