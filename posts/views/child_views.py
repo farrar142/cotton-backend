@@ -3,6 +3,7 @@ from django.apps import apps
 
 from rest_framework import exceptions
 
+from commons import permissions
 from commons.viewsets.base_viewsets import BaseViewset
 
 from users.models import User, models
@@ -111,7 +112,10 @@ class create_bool_child_mixin(Generic[M]):
                 return has_items
 
         create_items = BaseViewset.action(
-            methods=["POST"], detail=True, url_path=self.url_path, permission_classes=[]
+            methods=["POST"],
+            detail=True,
+            url_path=self.url_path,
+            permission_classes=[permissions.AuthorizedOnly],
         )(Mixin._create_items())
         delete_items = create_items.mapping.delete(Mixin._delete_items())
         has_items = create_items.mapping.get(Mixin._has_items())
