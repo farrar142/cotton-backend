@@ -9,6 +9,7 @@ from images.models import Image
 
 
 class Post(CommonModel):
+    objects = models.Manager()
     origin: "models.ForeignKey[Self | None]" = models.ForeignKey(
         "Post", on_delete=models.DO_NOTHING, related_name="childrens", null=True
     )

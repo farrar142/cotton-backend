@@ -20,6 +20,8 @@ class create_bool_child_mixin(Generic[M]):
         return apps.get_model(splitted[0], splitted[1])  # type:ignore
 
     def get_qs(self, instance: M) -> models.Manager[M]:
+        if getattr(instance, "is_deleted", False):
+            raise exceptions.NotFound
         return getattr(instance, self.child_str)
 
     def __init__(
@@ -109,7 +111,7 @@ class create_bool_child_mixin(Generic[M]):
                 return has_items
 
         create_items = BaseViewset.action(
-            methods=["POST"], detail=True, url_path=self.url_path
+            methods=["POST"], detail=True, url_path=self.url_path, permission_classes=[]
         )(Mixin._create_items())
         delete_items = create_items.mapping.delete(Mixin._delete_items())
         has_items = create_items.mapping.get(Mixin._has_items())

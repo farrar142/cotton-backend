@@ -1,6 +1,6 @@
 from typing import Literal
 from django.apps import apps
-from rest_framework.response import Response
+from django.utils.timezone import localtime
 from commons import paginations
 from commons import permissions
 from commons.requests import Request
@@ -12,7 +12,7 @@ from users.models import User, models
 from relations.models import Follow
 from ..services.post_service import PostService
 from ..models import Post
-from ..serializers import PostSerializer, FavoriteSerializer
+from ..serializers import PostSerializer, FavoriteSerializer, PostReadOnlySerializer
 
 from .child_views import create_bool_child_mixin
 
@@ -44,7 +44,7 @@ from .child_views import create_bool_child_mixin
 class PostViewSet(BaseViewset[Post, User]):
     permission_classes = [permissions.AuthorizedOrReadOnly]
     queryset = Post.concrete_queryset()
-    read_only_serializer = PostSerializer
+    read_only_serializer = PostReadOnlySerializer
     upsert_serializer = PostSerializer
     pagination_class = paginations.TimelinePagination
     offset_field = "latest_date"
@@ -85,6 +85,10 @@ class PostViewSet(BaseViewset[Post, User]):
                 )
             )
         )
+
+    def list(self, request, *args, **kwargs):
+        self.override_get_queryset(lambda qs: qs.filter(deleted_at__isnull=True))
+        return super().list(request, *args, **kwargs)
 
     @action(
         methods=["GET"],
@@ -173,3 +177,7 @@ class PostViewSet(BaseViewset[Post, User]):
         self.override_get_queryset(lambda qs: qs.filter(parent=instance))
         self.offset_field = "created_at"
         return self.list(*args, **kwargs)
+
+    def perform_destroy(self, instance):
+        instance.deleted_at = localtime()
+        instance.save()

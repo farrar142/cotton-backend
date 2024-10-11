@@ -33,9 +33,7 @@ def get_documents_from_posts(posts: "list[Post]", user: "User"):
     return loader.load()
 
 
-chatollama = ChatOllama(
-    model="lumimaid",
-)
+chatollama = ChatOllama(model="lumimaid", timeout=100)
 chatollama.base_url = os.getenv("OLLAMA_URL", "")
 chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
 embedding = SentenceTransformerEmbeddings(

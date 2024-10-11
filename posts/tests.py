@@ -255,11 +255,12 @@ class TestPostsBase(TestCase):
     user2: User
     user3: User
 
-    def create_post(self, user: User) -> int:
+    def create_post(self, user: User, **kwargs) -> int:
         builder = BlockTextBuilder()
         builder.text("hello world")
         self.ps = PostSerializer(
-            data=dict(text="hello world", blocks=builder.get_json()), user=user
+            data=dict(text="hello world", blocks=builder.get_json(), **kwargs),
+            user=user,
         )
         self.ps.is_valid(raise_exception=True), self.ps.save()
         return self.ps.instance.pk  # type:ignore
@@ -381,3 +382,29 @@ class TestProtected(TestPostsBase):
         self.assertEqual(resp.json()["results"].__len__(), 1)
         resp = self.client.get(f"/posts/timeline/username/{self.user.username}/")
         self.assertEqual(resp.json()["results"].__len__(), 0)
+
+
+class TestDeletedPost(TestPostsBase):
+    def test_delete_post(self):
+        self.client.login(self.user2)
+        resp = self.client.delete(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 403)
+
+        self.client.login(self.user)
+        resp = self.client.delete(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 204)
+
+    def test_handle_origin_when_deleted(self):
+        from django.db import models
+
+        post_2 = self.create_post(self.user2, origin=self.post_id, parent=self.post_id)
+        post_3 = self.create_post(self.user3, origin=self.post_id, parent=post_2)
+        self.client.login(self.user)
+        resp = self.client.delete(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 204)
+        resp = self.client.get(f"/posts/{self.post_id}/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["text"], "")
+
+        resp = self.client.get(f"/posts/flat/")
+        self.assertEqual(resp.json().__len__(), 2)

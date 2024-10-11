@@ -89,6 +89,7 @@ class PostSerializer(BaseModelSerializer[Post]):
             "replies_count",
             "depth",
             "reply_row_number_desc",
+            "deleted_at",
         )
 
     parent = serializers.PrimaryKeyRelatedField(
@@ -150,6 +151,33 @@ class PostSerializer(BaseModelSerializer[Post]):
             ser.save()
             instance.images.add(*ser.instance)  # type:ignore
         return instance
+
+
+class PostReadOnlySerializer(PostSerializer):
+    text = serializers.SerializerMethodField()
+    blocks = serializers.SerializerMethodField()
+    mentions = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
+
+    def get_text(self, obj: Post):
+        if obj.deleted_at:
+            return ""
+        return obj.text
+
+    def get_blocks(self, obj: Post):
+        if obj.deleted_at:
+            return []
+        return obj.blocks
+
+    def get_mentions(self, obj: Post):
+        if obj.deleted_at:
+            return []
+        return MentionSerializer(obj.mentions, many=True, context=self.context).data
+
+    def get_images(self, obj: Post):
+        if obj.deleted_at:
+            return []
+        return ImageSerializer(obj.images, many=True, context=self.context).data
 
 
 @inject_user
