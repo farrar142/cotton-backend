@@ -119,6 +119,33 @@ class TestMessages(TestCase):
         is_valid = MessageService.is_valid_to_create(self.user, self.user2)
         self.assertEqual(is_valid, True)
 
+    def test_add_user(self):
+        service = MessageService.get_or_create(
+            self.user,
+            self.user2,
+            self.user3,
+            is_direct_message=False,
+            title="group_message",
+        )
+        u = User.objects.create(
+            username="test4",
+            nickname="test4",
+            email="test4@test.com",
+            is_protected=True,
+        )
+        is_error = self.aware_error(service.add_user)(self.user, u)
+        self.assertEqual(is_error.is_error, True)
+
+        u.is_protected = False
+        u.save()
+        is_error = self.aware_error(service.add_user)(self.user, u)
+        self.assertEqual(is_error.is_error, False)
+
+        self.assertEqual(service.group.attendants.count(), 4)
+
+        service.exit_room(u)
+        self.assertEqual(service.group.attendants.count(), 3)
+
 
 class TestMessage(TestCase):
     def test_message_check(self):

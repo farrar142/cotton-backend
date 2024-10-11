@@ -60,7 +60,7 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
         )
 
     @classmethod
-    def send_group_message(cls, user_id: int | str, message_group_id: int):
+    def send_group_changed_message(cls, user_id: int | str, message_group_id: int):
 
         layer = get_channel_layer()
         if not layer:
@@ -73,23 +73,23 @@ class UserConsumer(AsyncJsonWebsocketConsumer):
             ),
         )
 
-    @classmethod
-    def send_group_user_exit(cls, user_id: int, message_group_id: int, exit_user: int):
-        layer = get_channel_layer()
-        if not layer:
-            return
-        async_to_sync(layer.group_send)(
-            cls.get_group_name(user_id),
-            dict(
-                type="emit_event",
-                data=dict(
-                    type="group",
-                    state="user_exit",
-                    id=message_group_id,
-                    exit_user=exit_user,
-                ),
-            ),
-        )
+    # @classmethod
+    # def send_group_user_exit(cls, user_id: int, message_group_id: int, exit_user: int):
+    #     layer = get_channel_layer()
+    #     if not layer:
+    #         return
+    #     async_to_sync(layer.group_send)(
+    #         cls.get_group_name(user_id),
+    #         dict(
+    #             type="emit_event",
+    #             data=dict(
+    #                 type="group",
+    #                 state="user_exit",
+    #                 id=message_group_id,
+    #                 exit_user=exit_user,
+    #             ),
+    #         ),
+    #     )
 
     @classmethod
     def send_notification(cls, user_id: int | str, message: dict):

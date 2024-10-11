@@ -1,6 +1,16 @@
 import functools
 import time
-from typing import Any, Callable, Concatenate, Mapping, ParamSpec, Self, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    Literal,
+    Mapping,
+    ParamSpec,
+    Self,
+    TypeVar,
+)
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.test import TestCase as TC, Client as C
@@ -76,6 +86,23 @@ def record_query(func: Callable[P, T]):
     return wrapper
 
 
+E = TypeVar("E")
+B = TypeVar("B", bound=bool)
+ErrorType = dict[str, Exception]
+
+
+class ErrorContainer(Generic[E, B]):
+    detail: E
+    is_error: B
+
+    def __init__(self, data, is_error: B):
+        self.is_error = is_error
+        if self.is_error:
+            self.detail = data
+        else:
+            self.detail = data
+
+
 class TestCase(TC):
     client_class = Client
     client: Client = Client()
@@ -104,3 +131,21 @@ class TestCase(TC):
 
     def pprint(self, *args, **kwargs):
         pp(*args, **kwargs)
+
+    def aware_error(
+        self, func: Callable[P, T]
+    ) -> Callable[
+        P, ErrorContainer[T, Literal[False]] | ErrorContainer[ErrorType, Literal[True]]
+    ]:
+        @functools.wraps(func)
+        def wrapper(
+            *args: P.args, **kwargs: P.kwargs
+        ) -> (
+            ErrorContainer[T, Literal[False]] | ErrorContainer[ErrorType, Literal[True]]
+        ):
+            try:
+                return ErrorContainer[T, Literal[False]](func(*args, **kwargs), False)
+            except Exception as e:
+                return ErrorContainer[ErrorType, Literal[True]](e, True)
+
+        return wrapper

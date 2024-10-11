@@ -139,3 +139,16 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         service = MessageService(self.get_object())
         service.exit_room(self.request.user)
         return self.Response(204)
+
+    @action(methods=["POST"], detail=True, url_path="add_users")
+    def add_user(self, *args, **kwrags):
+        class UserAddSerializer(serializers.Serializer):
+            users = UserSerializer(
+                many=True, queryset=User.concrete_queryset(self.request.user)
+            )
+
+        s = UserAddSerializer(data=self.request.data)
+        s.is_valid(raise_exception=True)
+        users: list[User] = (*s.validated_data["users"],)  # type:ignore
+        service = MessageService(self.get_object())
+        service.add_user(self.request.user, *users)

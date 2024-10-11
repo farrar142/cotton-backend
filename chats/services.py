@@ -6,7 +6,7 @@ from rest_framework import exceptions
 from commons.lock import with_lock
 
 from .models import User, MessageGroup, MessageAttendant, Message, MessageCheck, models
-from .tasks import send_message_by_ws_to_group, send_group_user_exit
+from .tasks import send_message_by_ws_to_group, send_group_state_changed_to_users
 
 
 class MessageService:
@@ -135,4 +135,20 @@ class MessageService:
     def exit_room(self, user: User):
         attendant = self.get_attendant(user=user)
         self.group.attendants.remove(user)
-        send_group_user_exit.delay(self.group.pk, user.pk)
+        send_group_state_changed_to_users.delay(self.group.pk)
+
+    def add_user(self, user: User, *add_users: User):
+        if self.group.is_direct_message:
+            raise exceptions.ValidationError(
+                detail=dict(user=["Cannot add user to direct group"])
+            )
+
+        self.__class__.is_valid_to_create(user, *add_users, raise_exception=True)
+        if self.group.attendants.filter(
+            pk__in=list(map(lambda u: u.pk, add_users))
+        ).exists():
+            raise exceptions.ValidationError(
+                detail=dict(user=["User already in group"])
+            )
+        self.group.attendants.add(*add_users)
+        send_group_state_changed_to_users.delay(self.group.pk)
