@@ -212,8 +212,6 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
         "Summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
         collection_name=collection_name,
     )
-    if "summary of today" in resp:
-        return
 
     splitted = resp.split("\n")
 
