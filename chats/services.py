@@ -6,7 +6,7 @@ from rest_framework import exceptions
 from commons.lock import with_lock
 
 from .models import User, MessageGroup, MessageAttendant, Message, MessageCheck, models
-from .tasks import send_message_by_ws_to_group
+from .tasks import send_message_by_ws_to_group, send_group_user_exit
 
 
 class MessageService:
@@ -87,10 +87,19 @@ class MessageService:
     def __init__(self, group: MessageGroup):
         self.group = group
 
+    def get_attendant(self, user: AbstractBaseUser):
+        if attendant := MessageAttendant.objects.filter(
+            group=self.group, user=user
+        ).first():
+            return attendant
+        raise exceptions.ValidationError(
+            detail=dict(user=["User not in message group"])
+        )
+
     def send_message(self, user: User, message: str, identifier: str | None = None):
         if identifier == None:
             identifier = str(uuid4())
-        attendant = MessageAttendant.objects.get(group=self.group, user=user)
+        attendant = self.get_attendant(user=user)
         instance = attendant.messages.create(
             group=self.group, message=message, identifier=identifier
         )
@@ -122,3 +131,8 @@ class MessageService:
             MessageCheck(user=user, message=message) for message in messages
         ]
         MessageCheck.objects.bulk_create(message_checks)
+
+    def exit_room(self, user: User):
+        attendant = self.get_attendant(user=user)
+        self.group.attendants.remove(user)
+        send_group_user_exit.delay(self.group.pk, user.pk)

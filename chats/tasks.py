@@ -37,6 +37,15 @@ def send_group_state_changed_to_users(group_id: int):
 
 
 @shared_task()
+def send_group_user_exit(group_id: int, exit_user_id: int):
+    group = MessageGroup.objects.filter(pk=group_id).first()
+    if not group:
+        return
+    for user in group.attendants.all():
+        UserConsumer.send_group_user_exit(user.pk, group.pk, exit_user_id)
+
+
+@shared_task()
 def delete_no_message_group(group_id):
     if not (group := MessageGroup.objects.filter(pk=group_id).first()):
         return

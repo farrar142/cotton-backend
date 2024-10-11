@@ -229,6 +229,7 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
         "summary of one",
         "Here's is a summary",
         "Here is a summary",
+        "is a short summary",
     )
 
     builder = BlockTextBuilder()

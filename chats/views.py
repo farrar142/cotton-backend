@@ -133,3 +133,9 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
         service = MessageService(self.get_object())
         service.send_message(self.request.user, message, identifier)
         return self.result_response(True, 201)
+
+    @action(methods=["DELETE"], detail=True, url_path="exit_room")
+    def exit_room(self, *args, **kwargs):
+        service = MessageService(self.get_object())
+        service.exit_room(self.request.user)
+        return self.Response(204)

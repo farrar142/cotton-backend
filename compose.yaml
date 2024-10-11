@@ -72,7 +72,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 'all'
+              device_ids: ['1']
               capabilities: [gpu]
 
 volumes:
