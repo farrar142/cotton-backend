@@ -30,7 +30,7 @@ app.conf.update(
         },
         "expire_post_recommended": {
             "task": "posts.tasks.expire_post_recommended",
-            "schedule": schedules.crontab(minutes="*/1"),
+            "schedule": schedules.crontab(minute="*/1"),
         },
     }
 )
