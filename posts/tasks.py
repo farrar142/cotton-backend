@@ -20,11 +20,11 @@ def create_child_model(model_path: str, child_str: str, instance_id: int, user_i
     from .models import View, Favorite, Bookmark, Repost
 
     weights = 1
-    if isinstance(Favorite, instance):
+    if isinstance(instance, Favorite):
         weights = 5
-    elif isinstance(Bookmark, instance):
+    elif isinstance(instance, Bookmark):
         weights = 2
-    elif isinstance(Repost, instance):
+    elif isinstance(instance, Repost):
         weights = 10
     push_recommended_list.delay(instance_id, weights)
 

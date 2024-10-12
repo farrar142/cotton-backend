@@ -51,9 +51,6 @@ T = TypeVar("T")
 
 
 class ISOTime(datetime):
-    def __json__(self):
-        return self.isoformat()
-
     @property
     def __dict__(self):
         return self.isoformat()
