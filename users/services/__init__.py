@@ -150,6 +150,12 @@ class AuthService:
         return user, dict(refresh=str(refresh), access=access)
 
     def send_register_email(self):
+        already_key = f"email_sent:{self.user.pk}"
+        if cache.get(already_key, True, 3 * 60):
+            raise exceptions.ValidationError(
+                dict(email=["Try after three minutes later"])
+            )
+        cache.set(already_key, True)
         code_key = str(uuid4())
         cache_key = f"register:{code_key}"
         cache.set(cache_key, self.user.pk, 60 * 60)
