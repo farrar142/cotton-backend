@@ -28,6 +28,10 @@ app.conf.update(
             "args": (),
             "options": {"queue": "window"},
         },
+        "expire_post_recommended": {
+            "task": "posts.tasks.expire_post_recommended",
+            "schedule": schedules.crontab(minutes="*/1"),
+        },
     }
 )
 # Load task modules from all registered Django apps.

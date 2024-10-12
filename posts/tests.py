@@ -1,16 +1,22 @@
 import base64
+from collections import Counter
+from datetime import timedelta
+from functools import wraps
+import itertools
 from django.conf import settings
 from django.db import connection
 
 from base.test import TestCase
 
+from commons.caches import LRUCache, TimeoutCache
+from commons.lock import get_redis
 from commons.serializers import inject_context
 from users.models import User
 
 from .text_builder.block_text_builder import BlockTextBuilder
 from relations.service import FollowService
 from .services.post_service import PostService
-from .models import Post, Favorite, Bookmark, Repost
+from .models import Post, Favorite, Bookmark, Repost, View, models
 from .serializers import (
     PostSerializer,
     FavoriteSerializer,
@@ -408,3 +414,44 @@ class TestDeletedPost(TestPostsBase):
 
         resp = self.client.get(f"/posts/flat/")
         self.assertEqual(resp.json().__len__(), 2)
+
+
+class TestRecommended(TestPostsBase):
+    def test_recommend(self):
+        with LRUCache("test", 1) as cache:
+            cache.trunc()
+            cache.add(*range(10))
+            self.assertEqual(len(cache.all()), 1)
+            self.assertEqual(cache.all(), [9])
+
+        with LRUCache("test", 20) as cache:
+            cache.trunc()
+            cache.add(*range(10))
+            cache.add(*range(5))
+        from django.utils.timezone import localtime
+
+        with TimeoutCache("post_recommended") as cache:
+            cache.trunc()
+            cache.add(1, 2, 3, 4, 5)
+        with TimeoutCache("post_recommended") as cache:
+            cache.remove_out_dated(localtime() + timedelta(minutes=10))
+            self.assertEqual(cache.all(), [])
+
+        with TimeoutCache("post_recommended") as cache:
+            cache.trunc()
+            cache.add(1, 2, 3, 4, 5)
+            cache.add(1)
+            counter = cache.counter()
+            self.assertEqual(counter[0], 1)
+
+    def test_recommended_order(self):
+        post_2 = self.create_post(self.user2)
+        with TimeoutCache("post_recommended") as cache:
+            cache.trunc()
+            cache.add(self.post_id, weights=2)
+            cache.add(post_2)
+            counter = cache.counter()
+            print(counter)
+            self.assertEqual(counter[0], self.post_id)
+        resp = self.client.get("/posts/timeline/global/")
+        self.assertEqual(resp.json()["results"][0]["id"], self.post_id)

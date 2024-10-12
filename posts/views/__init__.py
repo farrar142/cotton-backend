@@ -1,9 +1,13 @@
 from typing import Literal
 from django.apps import apps
 from django.utils.timezone import localtime
+from django.core.cache import cache
+
 from commons import paginations
 from commons import permissions
+from commons.caches import TimeoutCache
 from commons.requests import Request
+from commons.utils.get_client_ip import get_client_ip
 from commons.viewsets import BaseViewset
 
 from images.models import Image
@@ -169,6 +173,26 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_global_timeline(self, *args, **kwargs):
         self.offset_field = "id"
+        key = f"cached_sessions:{get_client_ip(self.request)}"
+        if self.request.user.is_authenticated:
+            key = f"cached_sessions:{self.request.user.pk}"
+        saved_session: list[int] | None = cache.get(key)
+        if not saved_session:
+            with TimeoutCache("post_recommended") as pcache:
+                saved_session = pcache.counter()
+                if len(saved_session) <= 50:
+                    return self.list(*args, **kwargs)
+
+                cache.set(key, saved_session, timeout=300)
+        preserved = models.Case(
+            *[models.When(pk=pk, then=pos) for pos, pk in enumerate(saved_session)]
+        )
+
+        class C(paginations.TimelinePagination):
+            ordering = preserved
+
+        self.override_get_queryset(lambda qs: qs.filter(id__in=saved_session))
+        self.pagination_class = C
         return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=True, url_path="replies")

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from django.db import models
 from rest_framework.pagination import (
     CursorPagination as _CursorPagination,
@@ -51,6 +51,7 @@ class TimelinePagination(BasePagination):
     offset_order: Literal["desc"] | Literal["asc"] = "desc"
     queryset: models.QuerySet
     page_size = api_settings.PAGE_SIZE
+    ordering: Any | None = None
 
     def get_offset(self, request: Request):
         return request.query_params.get("offset")
@@ -86,9 +87,13 @@ class TimelinePagination(BasePagination):
         query_params = {f"{self._offset_field}{self._direction}": self._offset}
         if not self._offset:
             query_params = {}
-        self.queryset = queryset.filter(**query_params).order_by(
-            f"{self._offset_order}{self._offset_field}", f"{self._offset_order}id"
-        )
+        self.queryset = queryset.filter(**query_params)
+        if not self.ordering:
+            self.queryset = self.queryset.order_by(
+                f"{self._offset_order}{self._offset_field}", f"{self._offset_order}id"
+            )
+        else:
+            self.queryset = self.queryset.order_by(self.ordering)
         self.sliced_queryset = list(self.queryset[0 : page_size + 1])
         self.next_queryset = self.sliced_queryset[page_size : page_size + 1]
         return self.sliced_queryset[:page_size]
