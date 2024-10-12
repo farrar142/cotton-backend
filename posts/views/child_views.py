@@ -7,7 +7,7 @@ from commons import permissions
 from commons.viewsets.base_viewsets import BaseViewset
 
 from users.models import User, models
-from ..tasks import create_child_model
+from ..tasks import create_child_model, delete_child_models
 
 M = TypeVar("M", bound=models.Model)
 C = TypeVar("C", bound=models.Model)
@@ -42,6 +42,10 @@ class create_bool_child_mixin(Generic[M]):
         )
 
     def __call__(self, kls: type[BaseViewset[M, User]]) -> type[BaseViewset[M, User]]:
+        def get_instance_id(inner: BaseViewset):
+            lookup_url_kwarg = inner.lookup_url_kwarg or inner.lookup_field
+            return inner.kwargs[lookup_url_kwarg]
+
         class Mixin(kls):
             @staticmethod
             def _get_items():
@@ -63,11 +67,10 @@ class create_bool_child_mixin(Generic[M]):
             @staticmethod
             def _create_items():
                 def create_items(inner: Self, *args, **kwargs):
-                    instance = inner.get_object()
                     create_child_model.delay(
                         self.model_path,
                         self.child_str,
-                        instance.pk,
+                        get_instance_id(inner),
                         inner.request.user.pk,
                     )
                     # self.get_qs(instance).create(user=inner.request.user)
@@ -79,15 +82,20 @@ class create_bool_child_mixin(Generic[M]):
             @staticmethod
             def _delete_items():
                 def delete_items(inner: Self, *args, **kwargs):
-                    instance = inner.get_object()
-                    favorite = (
-                        self.get_qs(instance)
-                        .filter(user_id=inner.request.user.pk)
-                        .first()
+                    delete_child_models.delay(
+                        self.model_path,
+                        self.child_str,
+                        get_instance_id(inner),
+                        inner.request.user.pk,
                     )
-                    if not favorite:
-                        return inner.Response(status=204)
-                    favorite.delete()
+                    # favorite = (
+                    #     self.get_qs(instance)
+                    #     .filter(user_id=inner.request.user.pk)
+                    #     .first()
+                    # )
+                    # if not favorite:
+                    #     return inner.Response(status=204)
+                    # favorite.delete()
                     return inner.Response(status=204)
 
                 delete_items.__name__ = f"delete_{self.url_path}"
