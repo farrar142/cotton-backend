@@ -3,6 +3,8 @@ from django.apps import apps
 from django.utils.timezone import localtime
 from django.core.cache import cache
 
+from rest_framework import serializers
+
 from commons import paginations
 from commons import permissions
 from commons.caches import TimeoutCache
@@ -19,6 +21,10 @@ from ..models import Post
 from ..serializers import PostSerializer, FavoriteSerializer, PostReadOnlySerializer
 
 from .child_views import create_bool_child_mixin
+
+
+class SessionSizeSerializer(serializers.Serializer):
+    session_min_size = serializers.IntegerField(default=50)
 
 
 @create_bool_child_mixin[Post](
@@ -168,19 +174,28 @@ class PostViewSet(BaseViewset[Post, User]):
 
         return self.list(*args, **kwargs)
 
+    def get_session_key(self):
+        key = f"cached_sessions/v2:{get_client_ip(self.request)}"
+        if self.request.user.is_authenticated:
+            key = f"cached_sessions/v2:{self.request.user.pk}"
+        return key
+
     @action(
         methods=["GET"], detail=False, url_path="timeline/global", permission_classes=[]
     )
     def get_global_timeline(self, *args, **kwargs):
+        s = SessionSizeSerializer(data=self.request.query_params)
+        _, session_min_size = (
+            s.is_valid(raise_exception=True),
+            s.data["session_min_size"],  # type:ignore
+        )
         self.offset_field = "id"
-        key = f"cached_sessions:{get_client_ip(self.request)}"
-        if self.request.user.is_authenticated:
-            key = f"cached_sessions:{self.request.user.pk}"
+        key = self.get_session_key()
         saved_session: list[int] | None = cache.get(key)
         if not saved_session:
-            with TimeoutCache("post_recommended") as pcache:
+            with TimeoutCache("post_recommended/v2") as pcache:
                 saved_session = pcache.counter()
-                if len(saved_session) <= 50:
+                if len(saved_session) <= session_min_size:
                     return self.list(*args, **kwargs)
 
                 cache.set(key, saved_session, timeout=300)

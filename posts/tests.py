@@ -433,14 +433,20 @@ class TestRecommended(TestPostsBase):
         with TimeoutCache("post_recommended") as cache:
             cache.trunc()
             cache.add(1, 2, 3, 4, 5)
-        with TimeoutCache("post_recommended") as cache:
             cache.remove_out_dated(localtime() + timedelta(minutes=10))
             self.assertEqual(cache.all(), [])
 
         with TimeoutCache("post_recommended") as cache:
             cache.trunc()
             cache.add(1, 2, 3, 4, 5)
+            cache.remove_out_dated(localtime() - timedelta(minutes=10))
+            self.assertEqual(cache.all().__len__(), 5)
+
+        with TimeoutCache("post_recommended") as cache:
+            cache.trunc()
+            cache.add(1, 2, 3, 4, 5)
             cache.add(1)
+            print(cache.all())
             counter = cache.counter()
             self.assertEqual(counter[0], 1)
 
@@ -451,7 +457,7 @@ class TestRecommended(TestPostsBase):
             cache.add(self.post_id, weights=2)
             cache.add(post_2)
             counter = cache.counter()
-            print(counter)
             self.assertEqual(counter[0], self.post_id)
-        resp = self.client.get("/posts/timeline/global/")
+        self.client.login(self.user)
+        resp = self.client.get("/posts/timeline/global/", dict(session_min_size=0))
         self.assertEqual(resp.json()["results"][0]["id"], self.post_id)

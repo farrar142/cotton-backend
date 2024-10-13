@@ -67,9 +67,13 @@ def dumper(obj):
 
 
 class Container(TypedDict, Generic[T]):
-    value: T
-    weights: int
-    created_at: ISOTime
+    v: T  # value
+    w: int  # weights
+    c: int  # created_at #minute
+
+
+# 캐시크기의 경량화를 위해 필드이름을 줄이고, created_at을 특정 시간부터의 분, 혹은 시단위의 값으로 바꿀 수 있을 것 같음
+pivot_time_minute = int(datetime(year=2024, month=1, day=1).timestamp() / 60)
 
 
 class TimeoutCache(Generic[T]):
@@ -78,11 +82,26 @@ class TimeoutCache(Generic[T]):
         self.client = get_redis()
         self.key = key
 
+    _pivot_time_minute: int | None = None
+
+    @property
+    def pivot_time_minute(self):
+        if not self._pivot_time_minute:
+            self._pivot_time_minute = self.minute_timestamp(
+                datetime(year=2024, month=1, day=1)
+            )
+        return self._pivot_time_minute
+
+    @staticmethod
+    def minute_timestamp(dt: datetime):
+        return int(dt.timestamp() / 60)
+
     def remove_out_dated(self, expire: datetime):
+        expire_minute = self.minute_timestamp(expire) - self.pivot_time_minute
         all = self.all()
         outdateds: list[Container[T]] = []
         for item in all:
-            if item["created_at"] < expire:
+            if item["c"] < expire_minute:
                 outdateds.append(item)
 
         for outdated in outdateds:
@@ -97,20 +116,21 @@ class TimeoutCache(Generic[T]):
     def trunc(self):
         self.client.delete(self.key)
 
-    def decode(self, value: str):
-        loads = json.loads(value)
-        loads["created_at"] = ISOTime.fromisoformat(loads["created_at"])
+    def decode(self, value: str) -> Container[T]:
+        loads: Container[T] = json.loads(value)
         return loads
 
     def all(self) -> list[Container[T]]:
         values = self.client.lrange(self.key, 0, -1)
         return list(map(self.decode, values))  # type:ignore
 
-    def add(self, *values: T, weights=1):
-        now = localtime().isoformat()
+    def add(self, *values: T, weights=1, created_at: datetime | None = None):
+        if created_at == None:
+            created_at = localtime()
+        c = self.minute_timestamp(created_at) - self.pivot_time_minute
         date_wrapped = list(
             map(
-                lambda x: json.dumps(dict(value=x, created_at=now, weights=weights)),
+                lambda x: json.dumps(dict(v=x, c=c, w=weights)),
                 values,
             )
         )
@@ -120,6 +140,6 @@ class TimeoutCache(Generic[T]):
         all = self.all()
         res = defaultdict[T, int](int)
         for item in all:
-            res[item["value"]] += item["weights"]
+            res[item["v"]] += item["w"]
         sorted_res = sorted(res.items(), key=lambda x: -x[1])
         return list(map(lambda x: x[0], sorted_res))

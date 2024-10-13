@@ -54,7 +54,7 @@ def delete_child_models(
 
 @shared_task()
 def push_recommended_list(post_id: int, weights):
-    with TimeoutCache("post_recommended") as cache:
+    with TimeoutCache("post_recommended/v2") as cache:
         cache.add(post_id)
 
 
@@ -67,5 +67,5 @@ def create_mentions_in_background(mentioned_to_id: int, post_id: int):
 
 @shared_task()
 def expire_post_recommended():
-    with TimeoutCache("post_recommended") as cache:
+    with TimeoutCache("post_recommended/v2") as cache:
         cache.remove_out_dated(localtime() - timedelta(days=1))
