@@ -16,7 +16,7 @@ def create_mssage(group_id: int, user_id: int, message: str, identifier: str):
     ):
         return
     instance = attendant.messages.create(
-        grup_id=group_id, message=message, identifier=identifier
+        group_id=group_id, message=message, identifier=identifier
     )
     instance.checks.create(user_id=user_id)
     send_message_by_ws_to_group.delay(instance.pk)
