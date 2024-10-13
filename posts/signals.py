@@ -6,24 +6,9 @@ from .models import Post, Repost, Bookmark, Favorite, Mention
 
 @receiver(post_save, sender=Post)
 def on_post_created(sender, instance: Post, **kwargs):
-    from notifications.models import Notification
-    from ai.tasks import create_ai_post
+    from .tasks import on_post_created_task
 
-    flag = False
-    noti = Notification()
-    noti.from_user = instance.user
-    if instance.parent:
-        flag = True
-        noti.user = instance.parent.user
-        noti.replied_post = instance
-    elif instance.quote:
-        flag = True
-        noti.user = instance.quote.user
-        noti.quoted_post = instance
-    if flag:
-        noti.save()
-    create_ai_post.delay(post_id=instance.pk)
-    return
+    on_post_created_task.delay(instance.pk)
 
 
 @receiver(post_save, sender=Repost)

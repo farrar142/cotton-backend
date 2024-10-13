@@ -6,6 +6,30 @@ from commons.celery import shared_task
 from commons.lock import get_redis
 
 
+@shared_task()
+def on_post_created_task(post_id: int):
+    from .models import Post
+    from notifications.models import Notification
+    from ai.tasks import create_ai_post
+
+    if not (instance := Post.objects.filter(pk=post_id).first()):
+        return
+    flag = False
+    noti = Notification()
+    noti.from_user = instance.user
+    if instance.parent:
+        flag = True
+        noti.user = instance.parent.user
+        noti.replied_post = instance
+    elif instance.quote:
+        flag = True
+        noti.user = instance.quote.user
+        noti.quoted_post = instance
+    if flag:
+        noti.save()
+    create_ai_post.delay(post_id=instance.pk)
+
+
 def get_weights(instance):
     from .models import View, Favorite, Bookmark, Repost
 
