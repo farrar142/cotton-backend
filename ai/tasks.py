@@ -199,6 +199,13 @@ def chatbots_post_about_news():
         )
 
 
+def filter_lines(lines: list[str], *filterings: str):
+    filtered = filter(lambda x: True, lines)
+    for filtering in filterings:
+        filtered = filter(lambda x: filtering not in x, filtered)
+    return list(filtered)
+
+
 @shared_task(queue="window")
 def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
     from .rag import Rag
@@ -217,19 +224,16 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
 
     splitted = resp.split("\n")
 
-    def filter_lines(lines: list[str], *filterings: str):
-        filtered = filter(lambda x: True, lines)
-        for filtering in filterings:
-            filtered = filter(lambda x: filtering not in x, filtered)
-        return list(filtered)
-
     splitted = filter_lines(
         splitted,
         "summary of today",
         "summary of one",
         "Here's is a summary",
         "Here is a summary",
+        "is a summary",
         "is a short summary",
+        "Random tweet",
+        "random news",
     )
 
     builder = BlockTextBuilder()
