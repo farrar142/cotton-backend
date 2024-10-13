@@ -108,6 +108,11 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
 
     @action(methods=["POST"], detail=True, url_path="check_as_readed")
     def post_check_messages(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            raise exceptions.NotAuthenticated()
+        self.get_queryset = lambda: MessageGroup.objects.filter(
+            attendants=self.request.user
+        )
         service = MessageService(self.get_object())
         service.check_message(self.request.user)
         return self.result_response(True, 201)
@@ -126,6 +131,12 @@ class MessageGroupViewset(BaseViewset[MessageGroup, User]):
 
     @action(methods=["POST"], detail=True, url_path="send_message")
     def send_message(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            raise exceptions.NotAuthenticated()
+        self.get_queryset = lambda: MessageGroup.objects.filter(
+            attendants=self.request.user
+        )
+
         class Serializer(serializers.Serializer):
             message = serializers.CharField()
             identifier = serializers.CharField(required=False)
