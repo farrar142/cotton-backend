@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Notification
 from .serializers import NotificationSerializer
-from chats.consumers import UserConsumer
+from users.consumers import UserConsumer
 
 
 @receiver(post_save, sender=Notification)

@@ -1,6 +1,6 @@
 from commons.celery import shared_task
 
-from .consumers import UserConsumer
+from users.consumers import UserConsumer
 from .serializers import MessageSerializer
 from .models import MessageGroup, Message, models
 
