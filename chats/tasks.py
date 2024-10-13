@@ -1,8 +1,40 @@
 from commons.celery import shared_task
 
+from users.models import User
 from users.consumers import UserConsumer
+
 from .serializers import MessageSerializer
-from .models import MessageGroup, Message, models
+from .models import MessageGroup, Message, MessageAttendant, MessageCheck, models
+
+
+@shared_task()
+def create_mssage(group_id: int, user_id: int, message: str, identifier: str):
+    if not (
+        attendant := MessageAttendant.objects.filter(
+            group_id=group_id, user_id=user_id
+        ).first()
+    ):
+        return
+    instance = attendant.messages.create(
+        grup_id=group_id, message=message, identifier=identifier
+    )
+    instance.checks.create(user_id=user_id)
+    send_message_by_ws_to_group.delay(instance.pk)
+
+
+@shared_task()
+def check_messages(group_id: int, user_id: int):
+    from .services import MessageService
+
+    group = MessageGroup.objects.filter(pk=group_id).first()
+    user = User.objects.filter(pk=user_id).first()
+    if not group or not user:
+        return
+    service = MessageService(group)
+    messages = service.__class__.get_unreaded_message(user).filter(group=group)
+
+    message_checks = [MessageCheck(user=user, message=message) for message in messages]
+    MessageCheck.objects.bulk_create(message_checks)
 
 
 @shared_task()

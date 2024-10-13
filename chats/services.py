@@ -6,7 +6,12 @@ from rest_framework import exceptions
 from commons.lock import with_lock
 
 from .models import User, MessageGroup, MessageAttendant, Message, MessageCheck, models
-from .tasks import send_message_by_ws_to_group, send_group_state_changed_to_users
+from .tasks import (
+    send_message_by_ws_to_group,
+    send_group_state_changed_to_users,
+    create_mssage,
+    check_messages,
+)
 
 
 class MessageService:
@@ -101,13 +106,7 @@ class MessageService:
     def send_message(self, user: User, message: str, identifier: str | None = None):
         if identifier == None:
             identifier = str(uuid4())
-        attendant = self.get_attendant(user=user)
-        instance = attendant.messages.create(
-            group=self.group, message=message, identifier=identifier
-        )
-        instance.checks.create(user=user)
-        send_message_by_ws_to_group.delay(instance.pk)
-        return instance
+        create_mssage.delay(self.group.pk, user.pk, message, identifier)
 
     def get_messages(self, user: User):
         return self.group.messages.annotate(
@@ -128,11 +127,7 @@ class MessageService:
         )
 
     def check_message(self, user: AbstractBaseUser):
-        messages = self.__class__.get_unreaded_message(user).filter(group=self.group)
-        message_checks = [
-            MessageCheck(user=user, message=message) for message in messages
-        ]
-        MessageCheck.objects.bulk_create(message_checks)
+        check_messages.delay(self.group.pk, user.pk)
 
     def exit_room(self, user: User):
         attendant = self.get_attendant(user=user)
