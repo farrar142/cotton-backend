@@ -1,22 +1,15 @@
 import base64
-from collections import Counter
 from datetime import timedelta
-from functools import wraps
-import itertools
 from django.conf import settings
-from django.db import connection
 from django.core.cache import cache
 
 from base.test import TestCase
 
 from commons.caches import LRUCache, TimeoutCache
-from commons.lock import get_redis
-from commons.serializers import inject_context
 from users.models import User
 
 from .text_builder.block_text_builder import BlockTextBuilder
 from relations.service import FollowService
-from .services.post_service import PostService
 from .models import Post, Favorite, Bookmark, Repost, View, models
 from .serializers import (
     PostSerializer,
@@ -472,6 +465,33 @@ class TestRecommended(TestPostsBase):
             "/posts/timeline/global/", dict(offset=cp, direction="prev")
         )
         self.pprint(resp.json())
+
+    def test_exceed_cache(self):
+        print("run")
+        from django.utils.timezone import localtime
+
+        Post.objects.all().delete()
+        post_2 = self.create_post(self.user2)
+        posts = [Post(user=self.user, text=f"{i}") for i in range(100)]
+        posts = Post.objects.bulk_create(posts)
+        print("post create")
+        cache.delete(f"cached_sessions/v2:{self.user.pk}")
+        with TimeoutCache("post_recommended/v2") as tc:
+            tc.trunc()
+            tc.add(self.post_id, weights=2, created_at=localtime() - timedelta(hours=1))
+            tc.add(post_2, created_at=localtime() - timedelta(hours=1))
+            tc.add(
+                *map(lambda x: x.pk, posts),
+                weights=1,
+                created_at=localtime() - timedelta(hours=1),
+            )
+
+            counter = tc.counter()
+            self.assertEqual(counter[0], self.post_id)
+            tc.remove_out_dated(localtime())
+            self.assertEqual(tc.counter().__len__(), 100)
+            tc.remove_out_dated(localtime(), 150)
+            self.assertEqual(tc.counter().__len__(), 100)
 
 
 class TestElasticSearch(TestCase):

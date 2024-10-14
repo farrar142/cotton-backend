@@ -96,7 +96,7 @@ class TimeoutCache(Generic[T]):
     def minute_timestamp(dt: datetime):
         return int(dt.timestamp() / 60)
 
-    def remove_out_dated(self, expire: datetime):
+    def remove_out_dated(self, expire: datetime, min_items_count=100):
         expire_minute = self.minute_timestamp(expire) - self.pivot_time_minute
         all = self.all()
         outdateds: list[Container[T]] = []
@@ -104,8 +104,13 @@ class TimeoutCache(Generic[T]):
             if item["c"] < expire_minute:
                 outdateds.append(item)
 
-        for outdated in outdateds:
-            self.client.lrem(self.key, 0, json.dumps(outdated, default=dumper))
+        current_size = all.__len__()  # 120
+        removal_size = current_size - min_items_count  # 20
+        if 0 < removal_size:
+            outdateds = outdateds[:removal_size]
+
+            for outdated in outdateds:
+                self.client.lrem(self.key, 0, json.dumps(outdated, default=dumper))
 
     def __enter__(self):
         return self

@@ -63,8 +63,9 @@ INSTALLED_APPS = [
     "notifications",
     "chats",
     "ai",
-    "django_elasticsearch_dsl",
 ]
+if not DEBUG:
+    INSTALLED_APPS.append("django_elasticsearch_dsl")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
