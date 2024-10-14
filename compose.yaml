@@ -41,6 +41,7 @@ services:
     image: nginx:latest
     ports:
       - ${PORT:-8000}:8000
+    restart: always
     volumes:
       - ./deploy.conf:/etc/nginx/conf.d/deploy.conf
   celery:
