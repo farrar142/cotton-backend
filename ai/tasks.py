@@ -163,7 +163,7 @@ def _crawl_news(
     # splitted = split_docs(docs)
     if not docs:
         return
-    now = localtime().isoformat()
+    now = localtime().timestamp()
     for doc in docs:
         doc.metadata.setdefault("created_at", now)
     rag = Rag()
@@ -220,7 +220,7 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
         user,
         "Summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
         collection_name=collection_name,
-        filter={"created_at": {"$gte": truncated.isoformat()}},
+        filter={"created_at": {"$gte": truncated.timestamp()}},
     )
     if "Kotb" in resp:
         return
