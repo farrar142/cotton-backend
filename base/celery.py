@@ -18,13 +18,13 @@ app.conf.update(
         "crawl_news": {
             "task": "ai.tasks.crawl_news",
             "schedule": schedules.crontab(
-                hour="*", minute="0"
+                hour="8-20", minute="0"
             ),  # 매시 정각에 실행되도록
             "args": (),
         },
         "chatbots_post": {
             "task": "ai.tasks.chatbots_post_about_news",
-            "schedule": schedules.crontab(minute="*/5"),
+            "schedule": schedules.crontab(minute="*/5", hour="9-20"),
             "args": (),
             "options": {"queue": "window"},
         },
