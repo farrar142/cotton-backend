@@ -24,7 +24,7 @@ from .child_views import create_bool_child_mixin
 
 
 class SessionSizeSerializer(serializers.Serializer):
-    session_min_size = serializers.IntegerField(default=50)
+    session_min_size = serializers.IntegerField(default=500)
 
 
 @create_bool_child_mixin[Post](
@@ -195,7 +195,7 @@ class PostViewSet(BaseViewset[Post, User]):
         if not saved_session:
             with TimeoutCache("post_recommended/v2") as pcache:
                 saved_session = pcache.counter()
-                if len(saved_session) <= session_min_size:
+                if len(saved_session) < session_min_size:
                     return self.list(*args, **kwargs)
 
                 cache.set(key, saved_session, timeout=300)

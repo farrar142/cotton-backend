@@ -214,10 +214,13 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
     if not user:
         return
     rag = Rag()
+    one_day_before = localtime() - timedelta(days=1)
+    truncated = one_day_before.replace(minute=0, second=0, microsecond=0)
     resp: str = rag.ask_llm(
         user,
         "Summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
         collection_name=collection_name,
+        filter={"created_at": {"$gte": truncated.isoformat()}},
     )
     if "Kotb" in resp:
         return

@@ -75,6 +75,7 @@ class Rag:
         query: str,
         db: Chroma | None = None,
         collection_name: str = "news",
+        filter: dict | None = None,
     ) -> str:
         from langchain.chains.question_answering import load_qa_chain
 
@@ -89,7 +90,7 @@ class Rag:
             verbose=False,
             prompt=prompt,
         )
-        matching_docs = db.similarity_search(query=query)
+        matching_docs = db.similarity_search(query=query, filter=filter)
 
         result = chain.invoke(
             input=dict(input_documents=matching_docs, question=query),
