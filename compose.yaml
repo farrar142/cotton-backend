@@ -40,6 +40,9 @@ services:
     restart: always
     volumes:
       - ./deploy.conf:/etc/nginx/conf.d/deploy.conf
+    depends_on:
+      - deploy
+      - deploy2
   celery:
     build: .
     container_name: cotton-celery
