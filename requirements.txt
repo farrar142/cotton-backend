@@ -35,3 +35,8 @@ lark
 # errorlogging
 
 sentry-sdk
+
+
+# es
+elasticsearch
+django-elasticsearch-dsl
