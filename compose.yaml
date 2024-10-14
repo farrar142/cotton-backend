@@ -38,6 +38,7 @@ services:
     ports:
       - ${PORT:-8000}:8000
     restart: always
+    network_mode: host
     volumes:
       - ./deploy.conf:/etc/nginx/conf.d/deploy.conf
     depends_on:
