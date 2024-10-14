@@ -105,6 +105,7 @@ class PostViewSet(BaseViewset[Post, User]):
     @action(methods=["GET"], detail=False, url_path=r"timeline/search")
     def get_es_search(self, *args, **kwargs):
         search = self.request.query_params.get("search", "")
+        self.filter_queryset = lambda x: self.get_custom_filterset(x)  # type:ignore
         if search:
             qs = (
                 PostDocument.search()
