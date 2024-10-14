@@ -6,11 +6,12 @@ from openai import OpenAI
 from django.conf import settings
 from django.utils.timezone import localtime
 
+from ai.rag.generate_prompt_template import generate_reply_prompt_template
 from base.test import TestCase
 from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.models import Post
-from .loaders import (
+from .news_crawlers import (
     get_documents_from_urls,
     get_documents_from_urls_v2,
     get_news_urls,
@@ -214,3 +215,40 @@ class TestAI(TestCase):
         )
         print(docs)
         self.pprint(split_docs(docs, chunk_overlap=20))
+
+
+class TestQueryRetriever(TestCase):
+    user: User
+
+    def test_query(self):
+        from .rag import Rag
+        from .rag.metadatas import NewsMetaData
+        from langchain.chains.question_answering import load_qa_chain
+        from langchain.retrievers.self_query.base import SelfQueryRetriever
+
+        cb = ChatBot.objects.first()
+        if not cb:
+            raise
+        rag = Rag()
+        db = rag._get_chroma(collection_name="huffington")
+        prompt = generate_reply_prompt_template(cb.user, self.user).get_prompt(
+            rag.client
+        )
+
+        chain = load_qa_chain(
+            rag.client, chain_type="stuff", verbose=False, prompt=prompt
+        )
+        retriever = SelfQueryRetriever.from_llm(
+            llm=rag.client,
+            vectorstore=db,
+            document_contents=f"Brief summary of a news",
+            metadata_field_info=NewsMetaData,
+        )
+        matching_docs = retriever.invoke("news of 2024-10-14")
+        result = chain.invoke(
+            input=dict(
+                input_documents=[*matching_docs],
+                question="can you tell me about today news",
+            ),
+        )
+        print(result["output_text"])

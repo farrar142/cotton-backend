@@ -9,12 +9,7 @@ from users.models import User
 from posts.text_builder.block_text_builder import BlockTextBuilder
 from posts.serializers import PostSerializer
 
-from .loaders import (
-    get_documents_from_urls_v2,
-    get_news_urls,
-    filter_existing_urls,
-    split_docs,
-)
+from .news_crawlers import urls_to_documents
 
 if TYPE_CHECKING:
     from posts.models import Post
@@ -153,19 +148,11 @@ def _crawl_news(
 ):
     from .rag import Rag, chroma
 
-    urls = get_news_urls(news_url, icontain=url_icontains)
-    filtered_urls = filter_existing_urls(urls, collection_name, chroma=chroma)
-    if not filtered_urls:
-        return
-    docs = get_documents_from_urls_v2(
-        filtered_urls, limit=10, tag=article_tag, attrs=article_attrs
+    docs = urls_to_documents(
+        collection_name, news_url, url_icontains, article_tag, article_attrs, chroma
     )
-    # splitted = split_docs(docs)
     if not docs:
-        return
-    now = localtime().timestamp()
-    for doc in docs:
-        doc.metadata.setdefault("created_at", now)
+        return False
     rag = Rag()
     rag.save_documents_by_embbeding(docs, collection_name)
 
@@ -187,7 +174,6 @@ def chatbots_post_about_news():
         if not (subscriptions := chatbot.news_subscriptions.all()):
             continue
         news = choice(subscriptions)
-        print(user, news.collection_name)
         minute = randint(1, 10)
 
         if 5 < minute:

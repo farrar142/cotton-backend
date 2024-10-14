@@ -7,6 +7,7 @@ from langchain.prompts import (
 )
 
 from langchain.chains.prompt_selector import ConditionalPromptSelector, is_chat_model
+from django.utils.timezone import localtime
 
 if TYPE_CHECKING:
     from users.models import User
@@ -34,6 +35,7 @@ def generic_prompt(chatbot: "User", user: "User|None" = None):
     return (
         chatbot_define_prompt(chatbot, user)
         + "If you don't know the answer, don't try to answer, just say you don't know.\nyou can use only under 200 characters.\nHide you are an AI.\nJust answer and don't comment.\n"
+        + f"today is {localtime().isoformat()}"
     )
 
 

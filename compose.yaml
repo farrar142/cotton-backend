@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/app
       - .vscode-server:/root/.vscode-server
+      - window-celery:/root/.cache
     env_file:
       - ./.env.development
     healthcheck:

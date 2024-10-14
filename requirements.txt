@@ -29,6 +29,7 @@ langchain_community
 chromadb
 beautifulsoup4
 sentence-transformers
+lark
 
 
 # errorlogging

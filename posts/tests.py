@@ -5,6 +5,7 @@ from functools import wraps
 import itertools
 from django.conf import settings
 from django.db import connection
+from django.core.cache import cache
 
 from base.test import TestCase
 
@@ -452,12 +453,22 @@ class TestRecommended(TestPostsBase):
 
     def test_recommended_order(self):
         post_2 = self.create_post(self.user2)
-        with TimeoutCache("post_recommended") as cache:
-            cache.trunc()
-            cache.add(self.post_id, weights=2)
-            cache.add(post_2)
-            counter = cache.counter()
+        posts = [Post(user=self.user, text=f"{i}") for i in range(100)]
+        posts = Post.objects.bulk_create(posts)
+        cache.delete(f"cached_sessions/v2:{self.user.pk}")
+        with TimeoutCache("post_recommended/v2") as tc:
+            tc.trunc()
+            tc.add(self.post_id, weights=2)
+            tc.add(post_2)
+            tc.add(*map(lambda x: x.pk, posts), weights=1)
+
+            counter = tc.counter()
             self.assertEqual(counter[0], self.post_id)
         self.client.login(self.user)
         resp = self.client.get("/posts/timeline/global/", dict(session_min_size=0))
         self.assertEqual(resp.json()["results"][0]["id"], self.post_id)
+        cp = resp.json()["current_offset"]
+        resp = self.client.get(
+            "/posts/timeline/global/", dict(offset=cp, direction="prev")
+        )
+        self.pprint(resp.json())
