@@ -42,7 +42,7 @@ services:
     ports:
       - ${PORT:-8000}:8000
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./deploy.conf:/etc/nginx/conf.d/deploy.conf
   celery:
     build: .
     container_name: cotton-celery
