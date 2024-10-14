@@ -27,22 +27,22 @@ services:
             - driver: nvidia
               count: 'all'
               capabilities: [gpu]
-  deploy:
+  deploy: &deploy
     build: .
-    container_name: cotton-backend
-    ports:
-     - ${PORT:-8000}:8000
     entrypoint: sh run.sh
+    container_name: cotton-backend
     env_file:
       - ./.env
-    healthcheck:
-        test: ['CMD','curl','http://localhost:${PORT:-8000}/']
-        interval: 10s
-        timeout: 5s
-        retries: 2
-        start_period: 5s
-    restart: on-failure
-
+    restart: always
+  deploy2:
+    <<: *deploy
+    container_name: cotton-backend2
+  nginx:
+    image: nginx:latest
+    ports:
+      - ${PORT:-8000}:8000
+    volumes:
+      - nginx.conf:/etc/nginx/conf.d/nginx.conf
   celery:
     build: .
     container_name: cotton-celery
