@@ -8,9 +8,6 @@
 **/__pycache__
 **/.venv
 **/.classpath
-**/.dockerignore
-**/.git
-**/.gitignore
 **/.project
 **/.settings
 **/.toolstarget

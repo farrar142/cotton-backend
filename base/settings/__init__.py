@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "notifications",
     "chats",
     "ai",
+    "django_elasticsearch_dsl",
 ]
 
 MIDDLEWARE = [
@@ -204,6 +205,13 @@ KAKAO_CLIENT_KEY = getenv("KAKAO_CLIENT_KEY")
 KAKAO_SECRET_KEY = getenv("KAKAO_SECRET_KEY")
 
 OLLAMA_URL = getenv("OLLAMA_URL")
+
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": getenv("ES_HOST"),
+        "http_auth": getenv("ES_AUTH", "").split(","),
+    }
+}
 
 # SENTRY
 SENTRY_DSN = getenv("SENTRY_DSN")

@@ -472,3 +472,11 @@ class TestRecommended(TestPostsBase):
             "/posts/timeline/global/", dict(offset=cp, direction="prev")
         )
         self.pprint(resp.json())
+
+
+class TestElasticSearch(TestCase):
+    def test_es(self):
+        resp = self.client.get("/posts/timeline/search/", dict(search="crazy"))
+        self.assertEqual(resp.status_code, 200)
+        self.pprint(resp.json()["next_offset"])
+        self.pprint(resp.json()["results"].__len__())

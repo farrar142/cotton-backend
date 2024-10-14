@@ -22,6 +22,8 @@ from ..serializers import PostSerializer, FavoriteSerializer, PostReadOnlySerial
 
 from .child_views import create_bool_child_mixin
 
+from ..documents import PostDocument
+
 
 class SessionSizeSerializer(serializers.Serializer):
     session_min_size = serializers.IntegerField(default=500)
@@ -99,6 +101,24 @@ class PostViewSet(BaseViewset[Post, User]):
     def list(self, request, *args, **kwargs):
         self.override_get_queryset(lambda qs: qs.filter(deleted_at__isnull=True))
         return super().list(request, *args, **kwargs)
+
+    @action(methods=["GET"], detail=False, url_path=r"timeline/search")
+    def get_es_search(self, *args, **kwargs):
+        search = self.request.query_params.get("search", "")
+        if search:
+            qs = (
+                PostDocument.search()
+                .query(
+                    "multi_match",
+                    fields=["text", "user.nickname", "user.username"],
+                    query=search,
+                )[:300]
+                .to_queryset()
+            )
+            self.get_queryset = lambda: Post.concrete_queryset(
+                self.request.user, replace=qs
+            )
+        return self.list(*args, **kwargs)
 
     @action(
         methods=["GET"],
@@ -202,12 +222,9 @@ class PostViewSet(BaseViewset[Post, User]):
         preserved = models.Case(
             *[models.When(pk=pk, then=pos) for pos, pk in enumerate(saved_session)]
         )
-
-        class C(paginations.TimelinePagination):
-            ordering = preserved
-
-        self.override_get_queryset(lambda qs: qs.filter(id__in=saved_session))
-        self.pagination_class = C
+        self.override_get_queryset(
+            lambda qs: qs.filter(id__in=saved_session).order_by(preserved)
+        )
         return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=True, url_path="replies")

@@ -88,12 +88,11 @@ class TimelinePagination(BasePagination):
         if not self._offset:
             query_params = {}
         self.queryset = queryset.filter(**query_params)
-        if not self.ordering:
+        if not self.queryset.ordered:
             self.queryset = self.queryset.order_by(
-                f"{self._offset_order}{self._offset_field}", f"{self._offset_order}id"
+                f"{self._offset_order}{self._offset_field}",
+                f"{self._offset_order}id",
             )
-        else:
-            self.queryset = self.queryset.order_by(self.ordering)
         self.sliced_queryset = list(self.queryset[0 : page_size + 1])
         self.next_queryset = self.sliced_queryset[page_size : page_size + 1]
         return self.sliced_queryset[:page_size]

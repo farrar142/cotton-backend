@@ -52,12 +52,16 @@ class Post(CommonModel):
     relavant_repost: "list[Repost]|None"  # prefetch의 to_attr은 getter setter를 통하여 할당이 불가능해 보임
 
     @classmethod
-    def __concrete_qs_base(cls, user: AbstractBaseUser | None = None):
+    def __concrete_qs_base(
+        cls,
+        user: AbstractBaseUser | None = None,
+        replace: models.QuerySet[Self] | None = None,
+    ):
         if user and not user.is_authenticated:
             user = None
         return (
             super()
-            .concrete_queryset(user=user)
+            .concrete_queryset(user=user, replace=replace)
             .prefetch_related(
                 "images",
                 models.Prefetch(
@@ -94,6 +98,7 @@ class Post(CommonModel):
         cls,
         user: AbstractBaseUser | None = None,
         target_user: AbstractBaseUser | None = None,
+        replace: models.QuerySet[Self] | None = None,
     ):
         if user and not user.is_authenticated:
             user = None
@@ -103,7 +108,7 @@ class Post(CommonModel):
         if target_user and not target_user.is_authenticated:
             target_user = None
             repost_filter = models.Q(user=user) | models.Q(user=target_user)
-        return cls.__concrete_qs_base(user).annotate(
+        return cls.__concrete_qs_base(user, replace=replace).annotate(
             latest_date=models.functions.Coalesce(
                 models.Subquery(
                     Repost.objects.filter(post=models.OuterRef("pk"))

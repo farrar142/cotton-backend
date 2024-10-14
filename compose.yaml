@@ -10,8 +10,6 @@ services:
       - .:/app
       - .vscode-server:/root/.vscode-server
       - window-celery:/root/.cache
-    env_file:
-      - ./.env.development
     healthcheck:
         test: ['CMD','curl','http://localhost:8002/']
         interval: 10s
@@ -31,8 +29,6 @@ services:
     build: .
     entrypoint: sh run.sh
     container_name: cotton-backend
-    env_file:
-      - ./.env
     restart: always
   deploy2:
     <<: *deploy
@@ -48,16 +44,12 @@ services:
     build: .
     container_name: cotton-celery
     entrypoint: sh celery.sh
-    env_file:
-      - ./.env
     restart: on-failure
 
   beat:
     build: .
     container_name: cotton-celery-beat
     entrypoint: sh beat.sh
-    env_file:
-      - ./.env
     restart: on-failure
 
   window-celery:
@@ -66,8 +58,6 @@ services:
     entrypoint: sh celery.sh window
     volumes:
       - window-celery:/root/.cache
-    env_file:
-      - ./.env.window
     restart: on-failure
     deploy:
       resources:

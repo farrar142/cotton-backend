@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 from django.db import models
 
 from users.models import User
@@ -37,7 +37,12 @@ class CommonModel(BaseModel, SoftDeleteModel):
         abstract = True
 
     @classmethod
-    def concrete_queryset(cls, *args, **kwargs):
-        return cls.objects.prefetch_related(
+    def concrete_queryset(
+        cls, *args, replace: models.QuerySet[Self] | None = None, **kwargs
+    ):
+        qs = cls.objects
+        if replace:
+            qs = replace
+        return qs.prefetch_related(
             models.Prefetch("user", User.concrete_queryset(user=kwargs.get("user")))
         ).all()
