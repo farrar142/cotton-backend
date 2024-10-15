@@ -3,7 +3,7 @@ import elasticsearch_dsl as dsl
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 
-from .models import Post, Favorite
+from .models import Post, Favorite, Hashtag
 
 
 class DenseVector(fields.DEDField, fields.Field):
@@ -48,3 +48,9 @@ class PostDocument(Document):
             .select_related("user")
             .prefetch_related("hashtags", "favorites")
         )
+
+    def get_instance_from_related(self, related_instance):
+        if isinstance(related_instance, Favorite):
+            return related_instance.post
+        elif isinstance(related_instance, Hashtag):
+            return related_instance.post
