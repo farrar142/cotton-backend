@@ -6,6 +6,7 @@ from django.apps import apps
 from django.dispatch import Signal
 from django.core.exceptions import ObjectDoesNotExist
 from importlib import import_module
+from celery.result import allow_join_result
 from commons.celery import shared_task
 
 
@@ -32,15 +33,17 @@ class CelerySignalProcessor(CSP):
         pk, app_label, model_name = self.get_info(instance)
         if app_label.startswith("django_celery"):
             return
-
-        self.prepare_registry_delete_related_task.delay(pk, app_label, model_name).get()
+        with allow_join_result():
+            self.prepare_registry_delete_related_task.delay(
+                pk, app_label, model_name
+            ).get()
 
     def handle_delete(self, sender, instance, **kwargs):
         pk, app_label, model_name = self.get_info(instance)
         if app_label.startswith("django_celery"):
             return
-
-        self.prepare_registry_delete_task.delay(pk, app_label, model_name).get()
+        with allow_join_result():
+            self.prepare_registry_delete_task.delay(pk, app_label, model_name).get()
 
     @shared_task()
     def prepare_registry_delete_related_task(pk, app_label, model_name):
@@ -61,9 +64,7 @@ class CelerySignalProcessor(CSP):
                 else:
                     object_list = related
                 bulk_data = (list(doc_instance._get_actions(object_list, action)),)
-                CelerySignalProcessor.registry_delete_task.delay(
-                    doc_instance.__class__.__name__, bulk_data
-                )
+                registry_delete_task.delay(doc_instance.__class__.__name__, bulk_data)
 
     @shared_task()
     def prepare_registry_delete_task(pk, app_label, model_name):
@@ -84,15 +85,7 @@ class CelerySignalProcessor(CSP):
                 else:
                     object_list = related
                 bulk_data = (list(doc_instance.get_actions(object_list, action)),)
-                CelerySignalProcessor.registry_delete_task.delay(
-                    doc_instance.__class__.__name__, bulk_data
-                )
-
-    @shared_task()
-    def registry_delete_task(doc_label, data):
-        doc_instance = import_module(doc_label)
-        parallel = True
-        doc_instance._bulk(data, parallel=parallel)
+                registry_delete_task.delay(doc_instance.__class__.__name__, bulk_data)
 
     @shared_task()
     def registry_update_task(pk, app_label, model_name):
@@ -113,3 +106,10 @@ class CelerySignalProcessor(CSP):
             pass
         else:
             registry.update_related(model.objects.get(pk=pk))
+
+
+@shared_task()
+def registry_delete_task(doc_label, data):
+    doc_instance = import_module(doc_label)
+    parallel = True
+    doc_instance._bulk(data, parallel=parallel)
