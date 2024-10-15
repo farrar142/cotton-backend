@@ -4,6 +4,11 @@ from langchain_community.embeddings import (
 )
 
 
+import torch
+
+torch.multiprocessing.set_start_method("spawn")
+
+
 @lru_cache(maxsize=1)
 def get_embedding(device="cuda"):
     if device:
