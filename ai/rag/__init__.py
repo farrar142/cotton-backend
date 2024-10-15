@@ -10,7 +10,7 @@ from langchain_chroma import Chroma
 
 # from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models.ollama import ChatOllama
-from ..embeddings import get_embedding
+from ..embeddings import embedding
 
 from .generate_prompt_template import (
     generate_prompt_template,
@@ -31,13 +31,13 @@ def get_documents_from_posts(posts: "list[Post]", user: "User"):
 chatollama = ChatOllama(model="lumimaid", timeout=100)
 chatollama.base_url = os.getenv("OLLAMA_URL", "")
 chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
-embedding =  get_embedding()
+
 
 class Rag:
     def __init__(self):
         self.client = chatollama
         self.chroma = chroma
-        self.embedding =
+        self.embedding = embedding
 
     def _get_chroma(self, collection_name: str):
 

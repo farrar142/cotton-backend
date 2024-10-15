@@ -282,9 +282,9 @@ class Post(CommonModel):
         )
 
     def get_embedding(self):
-        from ai.embeddings import get_embedding as ge
+        from ai.embeddings import embedding
 
-        return ge().embed_query(self.text)
+        return embedding.embed_query(self.text)
 
 
 class View(CommonModel):
