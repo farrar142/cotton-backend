@@ -49,7 +49,7 @@ class PostDocument(Document):
             .prefetch_related("hashtags", "favorites")
         )
 
-    def get_instance_from_related(self, related_instance):
+    def get_instances_from_related(self, related_instance):
         if isinstance(related_instance, Favorite):
             return related_instance.post
         elif isinstance(related_instance, Hashtag):
