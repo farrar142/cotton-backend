@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 
 from celery import Celery, schedules
+from kombu import Queue
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "base.settings")
 
@@ -34,5 +35,6 @@ app.conf.update(
         },
     }
 )
+app.conf.task_queues = (Queue("window", routing_key="django_elasticsearch_dsl.#"),)
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
