@@ -30,6 +30,8 @@ services:
     entrypoint: sh run.sh
     container_name: cotton-backend
     restart: always
+    volumes:
+      - window-celery:/root/.cache
   deploy2:
     <<: *deploy
     container_name: cotton-backend2

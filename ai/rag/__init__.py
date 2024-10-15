@@ -2,8 +2,6 @@ from random import shuffle
 from typing import TYPE_CHECKING
 import chromadb, os, bs4
 from langchain_core.documents import Document
-from langchain_community.document_loaders import CSVLoader, TextLoader, WebBaseLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import (
     SentenceTransformerEmbeddings,
 )
@@ -12,7 +10,7 @@ from langchain_chroma import Chroma
 
 # from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models.ollama import ChatOllama
-import requests
+from ..embeddings import get_embedding
 
 from .generate_prompt_template import (
     generate_prompt_template,
@@ -36,9 +34,7 @@ def get_documents_from_posts(posts: "list[Post]", user: "User"):
 chatollama = ChatOllama(model="lumimaid", timeout=100)
 chatollama.base_url = os.getenv("OLLAMA_URL", "")
 chroma = chromadb.HttpClient(host="192.168.0.14", port=10000)
-embedding = SentenceTransformerEmbeddings(
-    model_name="all-MiniLM-l6-v2", model_kwargs=dict(device="cuda")
-)
+embedding = get_embedding()
 
 
 class Rag:

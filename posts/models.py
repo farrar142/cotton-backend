@@ -281,6 +281,12 @@ class Post(CommonModel):
             )
         )
 
+    def get_embedding(self):
+        from ai.embeddings import get_embedding as ge
+
+        l = ge(None).embed_query(self.text)
+        return l
+
 
 class View(CommonModel):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="views")
