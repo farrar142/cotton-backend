@@ -111,7 +111,12 @@ class PostViewSet(BaseViewset[Post, User]):
                 PostDocument.search()
                 .query(
                     "multi_match",
-                    fields=["text", "user.nickname", "user.username"],
+                    fields=[
+                        "text",
+                        "user.nickname",
+                        "user.username",
+                        "hashtags[].text",
+                    ],
                     query=search,
                 )[:300]
                 .to_queryset()
