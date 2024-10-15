@@ -213,16 +213,14 @@ ELASTICSEARCH_DSL = {
         "http_auth": getenv("ES_AUTH", "").split(","),
     }
 }
-# ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-#     "django_elasticsearch_dsl.signals.CelerySignalProcessor"
-# )
-
-# SENTRY
+if not DEBUG:
+    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+        "django_elasticsearch_dsl.signals.CelerySignalProcessor"
+    )
 SENTRY_DSN = getenv("SENTRY_DSN")
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration()],
-        auto_session_tracking=False,
-        traces_sample_rate=0,
+        # ELA# ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+        #     "django_elasticsearch_dsl.signals.CelerySignalProcessor"
     )

@@ -1,3 +1,4 @@
+from typing import Any
 import elasticsearch_dsl as dsl
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
