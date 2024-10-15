@@ -213,9 +213,9 @@ ELASTICSEARCH_DSL = {
         "http_auth": getenv("ES_AUTH", "").split(","),
     }
 }
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "django_elasticsearch_dsl.signals.CelerySignalProcessor"
-)
+# ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+#     "django_elasticsearch_dsl.signals.CelerySignalProcessor"
+# )
 
 # SENTRY
 SENTRY_DSN = getenv("SENTRY_DSN")
