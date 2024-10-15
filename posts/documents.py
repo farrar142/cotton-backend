@@ -17,11 +17,11 @@ class PostDocument(Document):
     user = fields.ObjectField(
         properties=dict(username=fields.TextField(), nickname=fields.TextField())
     )
-    hashtags = fields.ListField(
-        fields.ObjectField(properties=dict(text=fields.KeywordField()))
-    )
+    # hashtags = fields.ListField(
+    #     fields.ObjectField(properties=dict(text=fields.KeywordField()))
+    # )
 
-    text_embedding = DenseVector()
+    # text_embedding = DenseVector()
 
     class Index:
         name = "posts"

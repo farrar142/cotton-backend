@@ -35,6 +35,6 @@ app.conf.update(
         },
     }
 )
-app.conf.task_queues = (Queue("window", routing_key="django_elasticsearch_dsl.#"),)
+app.conf.task_queues = (Queue("window", routing_key="django_elasticsearch_dsl.*"),)
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
