@@ -8,6 +8,7 @@ from base.test import TestCase
 from commons.caches import LRUCache, TimeoutCache
 from users.models import User
 
+from .services.post_selector import PostSelector
 from .text_builder.block_text_builder import BlockTextBuilder
 from relations.service import FollowService
 from .models import Post, Favorite, Bookmark, Repost, View, models
@@ -18,6 +19,7 @@ from .serializers import (
     RepostSerializer,
     PlainTextSerializer,
 )
+from .documents import PostDocument as PD
 
 
 # 리포스트 된 게시글은 상단으로 올라와야됨 [O]
@@ -498,8 +500,15 @@ class TestElasticSearch(TestCase):
     def test_es(self):
         resp = self.client.get("/posts/timeline/search/", dict(search="#TeslaStock"))
         self.assertEqual(resp.status_code, 200)
-        self.pprint(resp.json()["next_offset"])
-        self.pprint(resp.json()["results"].__len__())
+
+    def test_recommended_vector(self):
+        user = User.objects.get(username="Sandring")
+        posts = Post.objects.filter(favorites__user=user)[:10]
+        self.assertEqual(posts.count(), 3)
+        service = PostSelector()
+        near = service.get_post_knn(posts)
+        for q in near:
+            print(q.text)
 
 
 class TestHashtag(TestCase):

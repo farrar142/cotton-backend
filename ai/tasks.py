@@ -223,6 +223,7 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
         "is a short summary",
         "Random tweet",
         "random news",
+        "random summary",
     )
 
     builder = BlockTextBuilder()
