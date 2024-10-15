@@ -20,10 +20,12 @@ class PostDocument(Document):
         properties=dict(username=fields.TextField(), nickname=fields.TextField())
     )
     hashtags = fields.NestedField(properties=dict(text=fields.KeywordField()))
-    favorites = fields.NestedField(
-        properties=dict(
-            user_id=fields.IntegerField("user_id"),
-            post_id=fields.IntegerField("post_id"),
+    favorites = fields.ListField(
+        fields.ObjectField(
+            properties=dict(
+                user=fields.IntegerField("user_id"),
+                post=fields.IntegerField("post_id"),
+            )
         )
     )
 
@@ -51,6 +53,7 @@ class PostDocument(Document):
         )
 
     def get_instances_from_related(self, related_instance):
+        print(f"{related_instance=}")
         if isinstance(related_instance, Favorite):
             return related_instance.post
         elif isinstance(related_instance, Hashtag):

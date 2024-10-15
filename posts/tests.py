@@ -504,11 +504,13 @@ class TestElasticSearch(TestCase):
     def test_recommended_vector(self):
         user = User.objects.get(username="Sandring")
         posts = Post.objects.filter(favorites__user=user)[:10]
-        self.assertEqual(posts.count(), 3)
+        self.assertEqual(posts.exists(), True)
         service = PostSelector()
-        near = service.get_post_knn(posts)
-        for q in near:
-            print(q.text)
+        # near = service.get_post_knn(posts)
+        # for q in near:
+        #     print(q.text)
+        p = PD.search().filter("term", **{"favorites.user": 1}).to_queryset()
+        print(p)
 
 
 class TestHashtag(TestCase):

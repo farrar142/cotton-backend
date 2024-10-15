@@ -34,58 +34,14 @@ class CelerySignalProcessor(CSP):
         if app_label.startswith("django_celery"):
             return
         with allow_join_result():
-            self.prepare_registry_delete_related_task.delay(
-                pk, app_label, model_name
-            ).get()
+            prepare_registry_delete_related_task.delay(instance).get()
 
     def handle_delete(self, sender, instance, **kwargs):
         pk, app_label, model_name = self.get_info(instance)
         if app_label.startswith("django_celery"):
             return
         with allow_join_result():
-            self.prepare_registry_delete_task.delay(pk, app_label, model_name).get()
-
-    @shared_task()
-    def prepare_registry_delete_related_task(pk, app_label, model_name):
-        instance = CelerySignalProcessor.get_instance(pk, app_label, model_name)
-        if not instance:
-            return
-        action = "index"
-        for doc in registry._get_related_doc(instance):
-            doc_instance = doc(related_instance_to_ignore=instance)
-            try:
-                related = doc_instance.get_instances_from_related(instance)
-            except ObjectDoesNotExist:
-                related = None
-            if related is not None:
-                doc_instance.update(related)
-                if isinstance(related, models.Model):
-                    object_list = [related]
-                else:
-                    object_list = related
-                bulk_data = (list(doc_instance._get_actions(object_list, action)),)
-                registry_delete_task.delay(doc_instance.__class__.__name__, bulk_data)
-
-    @shared_task()
-    def prepare_registry_delete_task(pk, app_label, model_name):
-        instance = CelerySignalProcessor.get_instance(pk, app_label, model_name)
-        if not instance:
-            return
-        action = "delete"
-        for doc in registry._get_related_doc(instance):
-            doc_instance = doc(related_instance_to_ignore=instance)
-            try:
-                related = doc_instance.get_instances_from_related(instance)
-            except ObjectDoesNotExist:
-                related = None
-            if related is not None:
-                doc_instance.update(related)
-                if isinstance(related, models.Model):
-                    object_list = [related]
-                else:
-                    object_list = related
-                bulk_data = (list(doc_instance.get_actions(object_list, action)),)
-                registry_delete_task.delay(doc_instance.__class__.__name__, bulk_data)
+            prepare_registry_delete_task.delay(instance).get()
 
     @shared_task()
     def registry_update_task(pk, app_label, model_name):
@@ -109,7 +65,17 @@ class CelerySignalProcessor(CSP):
 
 
 @shared_task()
-def registry_delete_task(doc_label, data):
-    doc_instance = import_module(doc_label)
-    parallel = True
-    doc_instance._bulk(data, parallel=parallel)
+def prepare_registry_delete_related_task(instance, *args, **kwargs):
+    print(instance, args, kwargs)
+    registry.delete_related(instance)
+
+
+@shared_task()
+def prepare_registry_delete_task(instance, *args, **kwargs):
+    registry.delete(instance)
+
+
+# @shared_task()
+# def registry_delete_task(doc_instance, data):
+#     parallel = True
+#     doc_instance._bulk(data, parallel=parallel)
