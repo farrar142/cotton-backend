@@ -22,7 +22,8 @@ class PostDocument(Document):
     hashtags = fields.NestedField(properties=dict(text=fields.KeywordField()))
     favorites = fields.NestedField(
         properties=dict(
-            user=fields.IntegerField("user_id"), post=fields.IntegerField("post_id")
+            user_id=fields.IntegerField("user_id"),
+            post_id=fields.IntegerField("post_id"),
         )
     )
 
