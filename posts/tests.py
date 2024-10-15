@@ -500,3 +500,14 @@ class TestElasticSearch(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.pprint(resp.json()["next_offset"])
         self.pprint(resp.json()["results"].__len__())
+
+
+class TestHashtag(TestCase):
+    def test_hash_tag(self):
+        builder = BlockTextBuilder()
+        builder.text("awd dawdd #asdf adwdawdaw").new_line().text("ffff #ddawdas ")
+        self.client.login(self.user)
+        resp = self.client.post(
+            "/posts/", dict(text=builder.get_plain_text(), blocks=builder.get_json())
+        )
+        self.assertEqual(resp.status_code, 201)

@@ -171,34 +171,6 @@ class TestAI(TestCase):
             return
         self.assertEqual(docs.__len__(), 11)
 
-    # def test_ai_tweet_auto(self):
-    #     collection_name = "huff-test"
-    #     rag = Rag()
-    #     rag.truncate_collection(collection_name)
-    #     from posts.serializers import PostSerializer
-
-    #     resp: str = rag.ask_llm(
-    #         self.user,
-    #         "Please summarize just random one of today's news and make it like an sns post to your followers. \n Leave out the additional explanation and hashtags.\nWrite down your thoughts naturally too",
-    #         collection_name=collection_name,
-    #     )
-
-    #     builder = BlockTextBuilder()
-    #     splitted = resp.split("\n")
-    #     for text in splitted:
-    #         builder.text(text)
-    #     ser = PostSerializer(
-    #         data=dict(
-    #             text=builder.get_plain_text(),
-    #             blocks=builder.get_json(),
-    #         ),
-    #         user=self.user,
-    #     )
-    #     if not ser.is_valid():
-    #         return
-    #     ser.save()
-    #     print(ser.instance)
-
     def test_is_chatbot(self):
         ChatBot.objects.create(user=self.user)
         users = User.objects.filter(chatbots__isnull=False)
@@ -215,40 +187,3 @@ class TestAI(TestCase):
         )
         print(docs)
         self.pprint(split_docs(docs, chunk_overlap=20))
-
-
-class TestQueryRetriever(TestCase):
-    user: User
-
-    def test_query(self):
-        from .rag import Rag
-        from .rag.metadatas import NewsMetaData
-        from langchain.chains.question_answering import load_qa_chain
-        from langchain.retrievers.self_query.base import SelfQueryRetriever
-
-        cb = ChatBot.objects.first()
-        if not cb:
-            raise
-        rag = Rag()
-        db = rag._get_chroma(collection_name="huffington")
-        prompt = generate_reply_prompt_template(cb.user, self.user).get_prompt(
-            rag.client
-        )
-
-        chain = load_qa_chain(
-            rag.client, chain_type="stuff", verbose=False, prompt=prompt
-        )
-        retriever = SelfQueryRetriever.from_llm(
-            llm=rag.client,
-            vectorstore=db,
-            document_contents=f"Brief summary of a news",
-            metadata_field_info=NewsMetaData,
-        )
-        matching_docs = retriever.invoke("news of 2024-10-14")
-        result = chain.invoke(
-            input=dict(
-                input_documents=[*matching_docs],
-                question="can you tell me about today news",
-            ),
-        )
-        print(result["output_text"])

@@ -4,7 +4,7 @@ from images.serializers import ImageSerializer
 from users.models import User
 from users.serializers import UserSerializer
 
-from .models import Post, Favorite, Bookmark, Repost, Mention, View, models
+from .models import Post, Favorite, Bookmark, Repost, Mention, View, models, Hashtag
 
 
 class MentionSerializer(BaseModelSerializer[Mention]):
@@ -129,13 +129,25 @@ class PostSerializer(BaseModelSerializer[Post]):
             ).data
         return None
 
+    @staticmethod
+    def export_hash_tags_from_text(text: str):
+        text_splitted = " ".join(text.split("\n"))
+        trimmed = map(lambda x: x.strip(), text_splitted.split(" "))
+        hashtags = filter(lambda x: x.startswith("#"), trimmed)
+        return set(hashtags)
+
     def create(self, validated_data):
         mentions = validated_data.pop("mentions", [])
         images = validated_data.pop("images", [])
         parent = validated_data.get("parent", None)
         if parent:
             validated_data["depth"] = parent.depth + 1
+        tags = self.export_hash_tags_from_text(validated_data["text"])
         instance: Post = super().create(validated_data)
+        if tags:
+            instance.hashtags.bulk_create(
+                [Hashtag(post=instance, text=tag) for tag in tags]
+            )
         if mentions:
             from .tasks import create_mentions_in_background
 

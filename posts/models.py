@@ -29,6 +29,7 @@ class Post(CommonModel):
     bookmarks: "models.Manager[Bookmark]"
     reposts: "models.Manager[Repost]"
     mentions: "models.Manager[Mention]"
+    hashtags: "models.Manager[Hashtag]"
 
     reply_row_number_desc = make_property_field(
         0
@@ -302,3 +303,8 @@ class Mention(models.Model):
     mentioned_to = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="mentioned"
     )
+
+
+class Hashtag(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="hashtags")
+    text = models.CharField(max_length=512)
