@@ -17,13 +17,10 @@ from .generate_prompt_template import (
     generate_reply_prompt_template,
 )
 from .loader import PostLoader
-import torch
 
 if TYPE_CHECKING:
     from users.models import User
     from posts.models import Post
-
-torch.multiprocessing.set_start_method("spawn")
 
 
 def get_documents_from_posts(posts: "list[Post]", user: "User"):
