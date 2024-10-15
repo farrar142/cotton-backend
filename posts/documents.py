@@ -3,7 +3,6 @@ import elasticsearch_dsl as dsl
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 
-from ai.embeddings import get_embedding
 from .models import Post
 
 
