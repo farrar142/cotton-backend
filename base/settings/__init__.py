@@ -214,7 +214,7 @@ ELASTICSEARCH_DSL = {
     }
 }
 if not DEBUG:
-    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "post.dsl_processor.CelerySignalProcessor"
+    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "posts.dsl_processor.CelerySignalProcessor"
 SENTRY_DSN = getenv("SENTRY_DSN")
 if SENTRY_DSN:
     sentry_sdk.init(
