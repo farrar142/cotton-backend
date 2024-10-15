@@ -27,7 +27,7 @@ services:
               capabilities: [gpu]
   deploy: &deploy
     build: .
-    entrypoint: sh run.sh
+    entrypoint: sh run.sh 1/4
     container_name: cotton-backend
     restart: always
     volumes:
