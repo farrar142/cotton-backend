@@ -35,6 +35,9 @@ app.conf.update(
         },
     }
 )
-app.conf.task_routes = {"django_elasticsearch_dsl.*": {"queue": "window"}}
+app.conf.task_routes = {
+    "django_elasticsearch_dsl.*": {"queue": "window"},
+    "posts.dsl_processor.*": {"queue": "window"},
+}
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()

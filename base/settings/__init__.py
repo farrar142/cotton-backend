@@ -214,9 +214,7 @@ ELASTICSEARCH_DSL = {
     }
 }
 if not DEBUG:
-    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-        "django_elasticsearch_dsl.signals.CelerySignalProcessor"
-    )
+    ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "post.dsl_processor.CelerySignalProcessor"
 SENTRY_DSN = getenv("SENTRY_DSN")
 if SENTRY_DSN:
     sentry_sdk.init(
