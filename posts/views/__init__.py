@@ -117,7 +117,7 @@ class PostViewSet(BaseViewset[Post, User]):
             cache.set(cache_key, knn_qs, timeout=60)
         self.get_queryset = lambda: Post.concrete_queryset(
             self.request.user, replace=knn_qs
-        )
+        ).exclude(user=self.request.user)
         return self.list(*args, **kwargs)
 
     @action(
