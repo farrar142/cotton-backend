@@ -3,7 +3,7 @@ import numpy as np
 from elasticsearch_dsl import Q, A
 from django.utils.timezone import localtime, timedelta
 from users.documents import UserDocument as UD
-from ..documents import PostDocument as PD
+from ..documents import DenseVector, PostDocument as PD
 from ..models import models, Post, User
 
 
@@ -25,8 +25,9 @@ class RecommendService:
     def get_mean_vector(cls, ids: list[int]) -> list[float]:
         s = PD.search()
         r = s.query("ids", values=ids).execute()
-        vectors = [hit.text_embedding for hit in r]
-        return np.mean(vectors, axis=0)
+        if vectors := [hit.text_embedding for hit in r]
+            return np.mean(vectors, axis=0)
+        return [.0 for _ in range(DenseVector.dims)]
 
     @classmethod
     def get_post_knn(cls, target_queries: Iterable[Post]):

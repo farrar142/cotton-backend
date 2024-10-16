@@ -8,10 +8,10 @@ from .models import Post, Favorite, Hashtag, Repost, User
 
 class DenseVector(fields.DEDField, fields.Field):
     name = "dense_vector"
+    dims = 384
 
     def __init__(self, attr=None, **kwargs):
-        dims = 384
-        super(DenseVector, self).__init__(attr=attr, dims=dims, **kwargs)
+        super(DenseVector, self).__init__(attr=attr, dims=self.dims, **kwargs)
 
 
 @registry.register_document
