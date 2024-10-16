@@ -32,7 +32,7 @@ class FollowViewset(BaseViewset[User, User]):
             cache.set(cache_key, knn_qs, timeout=60)
         self.get_queryset = lambda: User.concrete_queryset(
             self.request.user, replace=knn_qs
-        )
+        ).filter(is_following_to=False)
         return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=False, url_path="followings")
