@@ -1,10 +1,15 @@
-from typing import Callable, Iterable, TypeVar
+from typing import Callable, Iterable, TypeVar, TypedDict
 import numpy as np
-from django.core.cache import cache
-from elasticsearch_dsl import Q
+from elasticsearch_dsl import Q, A
+from django.utils.timezone import localtime, timedelta
 from users.documents import UserDocument as UD
 from ..documents import PostDocument as PD
 from ..models import models, Post, User
+
+
+class Keyword(TypedDict):
+    key: str
+    doc_count: int
 
 
 class RecommendService:
@@ -47,3 +52,15 @@ class RecommendService:
             filter=Q("term", is_protected=False),
         )[:100]
         return r.to_queryset()
+
+    @classmethod
+    def get_top_terms_hashtag(cls) -> list[Keyword]:
+        now = localtime() - timedelta(hours=1)
+        s = PD.search()
+        agg = A("terms", field="hashtags.text", size=10)
+        s = s.filter("range", created_at={"gte": now}).filter(
+            "term", user__is_protected=False
+        )
+        s.aggs.bucket("top_terms", agg)
+        r = s.execute()
+        return r.aggregations.top_terms.buckets

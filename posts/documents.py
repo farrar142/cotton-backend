@@ -17,7 +17,11 @@ class DenseVector(fields.DEDField, fields.Field):
 @registry.register_document
 class PostDocument(Document):
     user = fields.ObjectField(
-        properties=dict(username=fields.TextField(), nickname=fields.TextField())
+        properties=dict(
+            username=fields.TextField(),
+            nickname=fields.TextField(),
+            is_protected=fields.BooleanField(),
+        )
     )
     hashtags = fields.ListField(
         fields.ObjectField(properties=dict(text=fields.KeywordField()))
@@ -40,6 +44,7 @@ class PostDocument(Document):
     )
 
     text_embedding = DenseVector()
+    text = fields.TextField("text", fielddata=True, analyzer="nori")
 
     def prepare_text_embedding(self, instance: Post):
         from ai.embeddings import embedding
@@ -54,9 +59,7 @@ class PostDocument(Document):
         model = Post  # The model associated with this Document
         queryset_pagination = 1000
         # The fields of the model you want to be indexed in Elasticsearch
-        fields = [
-            "text",
-        ]
+        fields = ["created_at"]
         related_models = [Favorite, Repost]
 
     def get_queryset(self):

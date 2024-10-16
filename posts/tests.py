@@ -1,11 +1,13 @@
 import base64
 from datetime import timedelta
+
 from django.conf import settings
 from django.core.cache import cache
+from django.utils.timezone import localtime
 
 from base.test import TestCase
-
 from commons.caches import LRUCache, TimeoutCache
+
 from users.models import User
 
 from .services.recommend_service import RecommendService
@@ -512,10 +514,18 @@ class TestElasticSearch(TestCase):
         self.assertEqual(posts.exists(), True)
         service = RecommendService
         near = service.get_post_knn(posts)
-        print(len(near))
-
         near = service.get_user_knn(posts)
-        print(near)
+
+    def test_tokenizer(self):
+        from elasticsearch_dsl import A
+
+        now = localtime() - timedelta(hours=1)
+        s = PD.search()
+        agg = A("terms", field="hashtags.text", size=10)
+        s = s.filter("range", created_at={"gte": now})
+        s.aggs.bucket("top_terms", agg)
+        r = s.execute()
+        print(r.aggregations.top_terms.buckets)
 
 
 class TestHashtag(TestCase):

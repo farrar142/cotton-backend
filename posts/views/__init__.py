@@ -120,6 +120,15 @@ class PostViewSet(BaseViewset[Post, User]):
         )
         return self.list(*args, **kwargs)
 
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path=r"timeline/recommended/tags",
+    )
+    def get_recommended_tags(self, *args, **kwargs):
+        tags = RecommendService.get_top_terms_hashtag()
+        return self.Response(tags)
+
     @action(methods=["GET"], detail=False, url_path=r"timeline/search")
     def get_es_search(self, *args, **kwargs):
         search = self.request.query_params.get("search", "")
