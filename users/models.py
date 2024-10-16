@@ -28,8 +28,14 @@ class UserAbstract(AbstractBaseUser, PermissionsMixin):
         return self.username
 
     @classmethod
-    def concrete_queryset(cls, *args, **kwargs):
-        return cls.objects.all()
+    def concrete_queryset(
+        cls, *args, replace: models.QuerySet[Self] | None = None, **kwargs
+    ):
+
+        qs = cls.objects
+        if replace:
+            qs = replace
+        return qs.all()
 
 
 if TYPE_CHECKING:
