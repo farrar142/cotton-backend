@@ -517,15 +517,8 @@ class TestElasticSearch(TestCase):
         near = service.get_user_knn(posts)
 
     def test_tokenizer(self):
-        from elasticsearch_dsl import A
-
-        now = localtime() - timedelta(hours=1)
-        s = PD.search()
-        agg = A("terms", field="hashtags.text", size=10)
-        s = s.filter("range", created_at={"gte": now})
-        s.aggs.bucket("top_terms", agg)
-        r = s.execute()
-        print(r.aggregations.top_terms.buckets)
+        resp = self.client.get("/posts/timeline/recommended/tags/")
+        self.pprint(resp.json())
 
 
 class TestHashtag(TestCase):

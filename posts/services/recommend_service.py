@@ -63,4 +63,4 @@ class RecommendService:
         )
         s.aggs.bucket("top_terms", agg)
         r = s.execute()
-        return r.aggregations.top_terms.buckets
+        return [*r.aggregations.top_terms.buckets]

@@ -124,6 +124,7 @@ class PostViewSet(BaseViewset[Post, User]):
         methods=["GET"],
         detail=False,
         url_path=r"timeline/recommended/tags",
+        permission_classes=[],
     )
     def get_recommended_tags(self, *args, **kwargs):
         tags = RecommendService.get_top_terms_hashtag()
