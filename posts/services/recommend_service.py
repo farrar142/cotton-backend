@@ -55,7 +55,7 @@ class RecommendService:
 
     @classmethod
     def get_top_terms_hashtag(cls) -> list[Keyword]:
-        now = localtime() - timedelta(hours=1)
+        now = localtime() - timedelta(days=1)
         s = PD.search()
         agg = A("terms", field="hashtags.text", size=10)
         s = s.filter("range", created_at={"gte": now}).filter(
