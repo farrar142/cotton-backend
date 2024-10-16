@@ -18,6 +18,8 @@ class UserBaseSerializer(BaseModelSerializer[User]):
             "bio",
             "profile_image",
             "header_image",
+            "is_superuser",
+            "is_staff",
         )
 
     bio = serializers.CharField(max_length=511, required=False)
