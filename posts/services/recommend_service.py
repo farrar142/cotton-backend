@@ -25,9 +25,9 @@ class RecommendService:
     def get_mean_vector(cls, ids: list[int]) -> list[float]:
         s = PD.search()
         r = s.query("ids", values=ids).execute()
-        if vectors := [hit.text_embedding for hit in r]
+        if vectors := [hit.text_embedding for hit in r]:
             return np.mean(vectors, axis=0)
-        return [.0 for _ in range(DenseVector.dims)]
+        return [0.0 for _ in range(DenseVector.dims)]
 
     @classmethod
     def get_post_knn(cls, target_queries: Iterable[Post]):
