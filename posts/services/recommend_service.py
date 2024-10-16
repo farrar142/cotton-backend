@@ -27,7 +27,7 @@ class RecommendService:
         r = s.query("ids", values=ids).execute()
         if vectors := [hit.text_embedding for hit in r]:
             return np.mean(vectors, axis=0)
-        return [0.0 for _ in range(DenseVector.dims)]
+        return [0.0 for _ in range(384)]
 
     @classmethod
     def get_post_knn(cls, target_queries: Iterable[Post]):
