@@ -19,7 +19,9 @@ class PostDocument(Document):
     user = fields.ObjectField(
         properties=dict(username=fields.TextField(), nickname=fields.TextField())
     )
-    hashtags = fields.NestedField(properties=dict(text=fields.KeywordField()))
+    hashtags = fields.ListField(
+        fields.ObjectField(properties=dict(text=fields.KeywordField()))
+    )
     favorites = fields.ListField(
         fields.ObjectField(
             properties=dict(
