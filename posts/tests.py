@@ -520,6 +520,12 @@ class TestElasticSearch(TestCase):
         resp = self.client.get("/posts/timeline/recommended/tags/")
         self.pprint(resp.json())
 
+    def test_recommend_user(self):
+        user = User.objects.filter(username="Sandring").first()
+        self.client.login(user)
+        resp = self.client.get("/relations/users/recommended/")
+        self.pprint(resp.json())
+
 
 class TestHashtag(TestCase):
     def test_hash_tag(self):

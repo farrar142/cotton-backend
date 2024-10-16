@@ -28,7 +28,7 @@ class FollowViewset(BaseViewset[User, User]):
         cache_key = f"recommended:users:{user.pk}"
         if not (knn_qs := cache.get(cache_key)):
             posts = RecommendService.get_users_related_posts(self.request.user)
-            knn_qs = RecommendService.get_post_knn(posts)
+            knn_qs = RecommendService.get_user_knn(posts)
             cache.set(cache_key, knn_qs, timeout=60)
         self.get_queryset = (
             lambda: User.concrete_queryset(self.request.user, replace=knn_qs)
