@@ -33,6 +33,7 @@ class UserAbstract(AbstractBaseUser, PermissionsMixin):
 
 
 if TYPE_CHECKING:
+    from posts.models import Post
     from relations.models import Follow
     from chats.models import MessageGroup, MessageAttendant
     from ai.models import ChatBot
@@ -56,6 +57,7 @@ class User(UserAbstract):
         through_fields=("followed_by", "following_to"),
     )
     followers: models.Manager["User"]
+    post_set: "models.Manager[Post]"
     message_groups: "models.Manager[MessageGroup]"
     message_attendants: "models.Manager[MessageAttendant]"
     third_party_integrations: "models.Manager[ThirdPartyIntegration]"

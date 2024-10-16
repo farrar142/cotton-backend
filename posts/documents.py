@@ -3,7 +3,7 @@ import elasticsearch_dsl as dsl
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 
-from .models import Post, Favorite, Hashtag, Repost
+from .models import Post, Favorite, Hashtag, Repost, User
 
 
 class DenseVector(fields.DEDField, fields.Field):
@@ -39,7 +39,12 @@ class PostDocument(Document):
         )
     )
 
-    text_embedding = DenseVector(attr="get_embedding")
+    text_embedding = DenseVector()
+
+    def prepare_text_embedding(self, instance: Post):
+        from ai.embeddings import embedding
+
+        return embedding.embed_query(instance.text)
 
     class Index:
         name = "posts"
@@ -63,6 +68,7 @@ class PostDocument(Document):
         )
 
     def get_instances_from_related(self, related_instance):
-        print(f"{related_instance=}")
         if isinstance(related_instance, (Favorite, Hashtag, Repost)):
             return related_instance.post
+        elif isinstance(related_instance, User):
+            return related_instance.post_set.all()
