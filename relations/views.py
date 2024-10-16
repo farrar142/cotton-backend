@@ -21,7 +21,7 @@ class FollowViewset(BaseViewset[User, User]):
     def get_queryset(self):
         return User.concrete_queryset(user=self.request.user)
 
-    @action(methods=["GET"], detail=False, url_path="recommended")
+    @action(methods=["GET"], detail=False, url_path="users/recommended")
     def get_recommended_users(self, *args, **kwargs):
 
         user = self.request.user
