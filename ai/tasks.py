@@ -174,9 +174,9 @@ def chatbots_post_about_news():
         if not (subscriptions := chatbot.news_subscriptions.all()):
             continue
         news = choice(subscriptions)
-        minute = randint(1, 10)
+        minute = randint(1, 40)
 
-        if 5 < minute:
+        if 20 < minute:
             continue
         _chatbot_post_about_news.apply_async(
             args=[user.pk],
