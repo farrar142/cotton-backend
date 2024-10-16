@@ -26,6 +26,8 @@ class AuthorizedOrReadOnly(BasePermission):
             return True
         if isinstance(request.user, AnonymousUser):
             return False
+        if getattr(request.user, "is_superuser"):
+            return True
         if request.user.pk != obj.user_id:
             return False
         return True
