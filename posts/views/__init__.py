@@ -110,13 +110,9 @@ class PostViewSet(BaseViewset[Post, User]):
     )
     def get_recommended_post(self, *args, **kwargs):
         user = self.request.user
-        cache_key = f"recommended:{user.pk}"
+        cache_key = f"recommended:posts:{user.pk}"
         if not (knn_qs := cache.get(cache_key)):
-            favorite_post = models.Q(favorites__user=user)
-            repost_post = models.Q(reposts__user=user)
-            posts = Post.objects.filter(favorite_post | repost_post).order_by(
-                "-created_at"
-            )[:10]
+            posts = RecommendService.get_users_related_posts(self.request.user)
             knn_qs = RecommendService.get_post_knn(posts)
             cache.set(cache_key, knn_qs, timeout=60)
         self.get_queryset = lambda: Post.concrete_queryset(

@@ -512,8 +512,10 @@ class TestElasticSearch(TestCase):
         self.assertEqual(posts.exists(), True)
         service = RecommendService
         near = service.get_post_knn(posts)
-        for n in near:
-            print(n.text)
+        print(len(near))
+
+        near = service.get_user_knn(posts)
+        print(near)
 
 
 class TestHashtag(TestCase):

@@ -36,7 +36,7 @@ class UserDocument(Document):
         model = User  # The model associated with this Document
         queryset_pagination = 1000
         # The fields of the model you want to be indexed in Elasticsearch
-        fields = ["username", "nickname", "bio"]
+        fields = ["username", "nickname", "bio", "is_protected"]
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("post_set")
