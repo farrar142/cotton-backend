@@ -59,7 +59,7 @@ class PostDocument(Document):
             super()
             .get_queryset()
             .select_related("user")
-            .prefetch_related("hashtags", "favorites")
+            .prefetch_related("hashtags", "favorites", "reposts")
         )
 
     def get_instances_from_related(self, related_instance):

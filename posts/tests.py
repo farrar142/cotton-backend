@@ -8,7 +8,7 @@ from base.test import TestCase
 from commons.caches import LRUCache, TimeoutCache
 from users.models import User
 
-from .services.post_selector import PostSelector
+from .services.recommend_service import RecommendService
 from .text_builder.block_text_builder import BlockTextBuilder
 from relations.service import FollowService
 from .models import Post, Favorite, Bookmark, Repost, View, models
@@ -503,14 +503,17 @@ class TestElasticSearch(TestCase):
 
     def test_recommended_vector(self):
         user = User.objects.get(username="Sandring")
-        posts = Post.objects.filter(favorites__user=user)[:10]
+        favorite_post = models.Q(favorites__user=user)
+        repost_post = models.Q(reposts__user=user)
+
+        posts = Post.objects.filter(favorite_post | repost_post).order_by(
+            "-created_at"
+        )[:10]
         self.assertEqual(posts.exists(), True)
-        service = PostSelector()
-        # near = service.get_post_knn(posts)
-        # for q in near:
-        #     print(q.text)
-        p = PD.search().filter("term", **{"favorites.user": 1}).to_queryset()
-        print(p)
+        service = RecommendService
+        near = service.get_post_knn(posts)
+        for n in near:
+            print(n.text)
 
 
 class TestHashtag(TestCase):

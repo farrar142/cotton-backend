@@ -16,7 +16,7 @@ from images.models import Image
 from images.serializers import ImageSerializer
 from users.models import User, models
 from relations.models import Follow
-from ..services.post_service import PostService
+from ..services.recommend_service import RecommendService
 from ..models import Post
 from ..serializers import PostSerializer, FavoriteSerializer, PostReadOnlySerializer
 
@@ -101,6 +101,28 @@ class PostViewSet(BaseViewset[Post, User]):
     def list(self, request, *args, **kwargs):
         self.override_get_queryset(lambda qs: qs.filter(deleted_at__isnull=True))
         return super().list(request, *args, **kwargs)
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path=r"timeline/recommended",
+        permission_classes=[permissions.AuthorizedOnly],
+    )
+    def get_recommended_post(self, *args, **kwargs):
+        user = self.request.user
+        cache_key = f"recommended:{user.pk}"
+        if not (knn_qs := cache.get(cache_key)):
+            favorite_post = models.Q(favorites__user=user)
+            repost_post = models.Q(reposts__user=user)
+            posts = Post.objects.filter(favorite_post | repost_post).order_by(
+                "-created_at"
+            )[:10]
+            knn_qs = RecommendService.get_post_knn(posts)
+            cache.set(cache_key, knn_qs, timeout=60)
+        self.get_queryset = lambda: Post.concrete_queryset(
+            self.request.user, replace=knn_qs
+        )
+        return self.list(*args, **kwargs)
 
     @action(methods=["GET"], detail=False, url_path=r"timeline/search")
     def get_es_search(self, *args, **kwargs):
