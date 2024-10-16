@@ -30,6 +30,14 @@ class PostDocument(Document):
             )
         )
     )
+    reposts = fields.ListField(
+        fields.ObjectField(
+            properties=dict(
+                user=fields.IntegerField("user_id"),
+                post=fields.IntegerField("post_id"),
+            )
+        )
+    )
 
     text_embedding = DenseVector(attr="get_embedding")
 
