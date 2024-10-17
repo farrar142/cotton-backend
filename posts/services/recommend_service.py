@@ -22,18 +22,21 @@ class RecommendService:
         ]
 
     @classmethod
-    def get_mean_vector(cls, ids: list[int]) -> list[float] | Literal[False]:
+    def get_mean_vector(cls, ids: list[int]) -> list[float]:
+        if not ids:
+            return []
         s = PD.search()
         r = s.query("ids", values=ids).execute()
         if vectors := [hit.text_embedding for hit in r]:
             return np.mean(vectors, axis=0)
-        return False
+        return []
 
     @classmethod
     def get_post_knn(cls, target_queries: Iterable[Post]):
         s = PD.search()
         ids = list(map(lambda x: x.pk, target_queries))
-        if not (mean_vector := cls.get_mean_vector(ids)):
+        mean_vector = cls.get_mean_vector(ids)
+        if len(mean_vector) == 0:
             return Post.objects.all()
 
         r = s.exclude("ids", values=ids).knn(
@@ -44,9 +47,9 @@ class RecommendService:
     @classmethod
     def get_user_knn(cls, target_queries: Iterable[Post]):
         ids = list(map(lambda x: x.pk, target_queries))
-        if not (mean_vector := cls.get_mean_vector(ids)):
+        mean_vector = cls.get_mean_vector(ids)
+        if len(mean_vector) == 0:
             return User.objects.all()
-
         us = UD.search()
         r = us.knn(
             field="post_embedding",
