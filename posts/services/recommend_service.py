@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, TypeVar, TypedDict
+from typing import Callable, Iterable, Literal, TypeVar, TypedDict
 import numpy as np
 from elasticsearch_dsl import Q, A
 from django.utils.timezone import localtime, timedelta
@@ -22,18 +22,20 @@ class RecommendService:
         ]
 
     @classmethod
-    def get_mean_vector(cls, ids: list[int]) -> list[float]:
+    def get_mean_vector(cls, ids: list[int]) -> list[float] | Literal[False]:
         s = PD.search()
         r = s.query("ids", values=ids).execute()
         if vectors := [hit.text_embedding for hit in r]:
             return np.mean(vectors, axis=0)
-        return [0.0 for _ in range(384)]
+        return False
 
     @classmethod
     def get_post_knn(cls, target_queries: Iterable[Post]):
         s = PD.search()
         ids = list(map(lambda x: x.pk, target_queries))
-        mean_vector = cls.get_mean_vector(ids)
+        if not (mean_vector := cls.get_mean_vector(ids)):
+            return Post.objects.all()
+
         r = s.exclude("ids", values=ids).knn(
             field="text_embedding", k=100, num_candidates=100, query_vector=mean_vector
         )[:100]
@@ -42,7 +44,8 @@ class RecommendService:
     @classmethod
     def get_user_knn(cls, target_queries: Iterable[Post]):
         ids = list(map(lambda x: x.pk, target_queries))
-        mean_vector = cls.get_mean_vector(ids)
+        if not (mean_vector := cls.get_mean_vector(ids)):
+            return User.objects.all()
 
         us = UD.search()
         r = us.knn(
