@@ -185,11 +185,24 @@ def chatbots_post_about_news():
         )
 
 
+filter_words = [
+    "summary of today",
+    "summary of one",
+    "Here's is a summary",
+    "Here is a summary",
+    "is a summary",
+    "is a short summary",
+    "Random tweet",
+    "random news",
+    "random summary",
+]
+
+
 def filter_lines(lines: list[str], *filterings: str):
-    filtered = filter(lambda x: True, lines)
+    filtered = list(filter(lambda x: True, lines))
     for filtering in filterings:
-        filtered = filter(lambda x: filtering not in x, filtered)
-    return list(filtered)
+        filtered = list(filter(lambda x: filtering not in x, filtered))
+    return filtered
 
 
 @shared_task(queue="window")
@@ -213,18 +226,7 @@ def _chatbot_post_about_news(user_id: int, collection_name: str = "huffington"):
 
     splitted = resp.split("\n")
 
-    splitted = filter_lines(
-        splitted,
-        "summary of today",
-        "summary of one",
-        "Here's is a summary",
-        "Here is a summary",
-        "is a summary",
-        "is a short summary",
-        "Random tweet",
-        "random news",
-        "random summary",
-    )
+    splitted = filter_lines(splitted, *filter_words)
 
     builder = BlockTextBuilder()
     for text in splitted:
